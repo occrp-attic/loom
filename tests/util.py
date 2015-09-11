@@ -1,8 +1,11 @@
 import os
+import logging
 import unicodecsv
 import dataset
 from normality import slugify
 
+logging.getLogger('alembic').setLevel(logging.WARN)
+logging.getLogger('dataset').setLevel(logging.WARN)
 
 FIXTURE_PATH = os.path.join(os.path.dirname(__file__), 'fixtures')
 
