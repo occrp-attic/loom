@@ -1,0 +1,8 @@
+source:
+    title: "Standard and Poor"
+    url: https://github.com/datasets/s-and-p-500-companies
+tables:
+    - companies
+    - financials
+joins:
+    - financials.symbol: companies.symbol

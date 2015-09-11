@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 setup(
     name='datamapper',
     version='0.1',
-    description="",
+    description="Map database queries to JSON schema objects.",
     long_description="",
     classifiers=[
         "Development Status :: 3 - Alpha",
@@ -25,8 +25,17 @@ setup(
     include_package_data=True,
     zip_safe=False,
     test_suite='nose.collector',
-    install_requires=[],
+    install_requires=[
+        'jsonmapping',
+        'sqlalchemy',
+        'pyyaml'
+    ],
     tests_require=[
+        'nose',
+        'coverage',
+        'unicodecsv',
+        'dataset',
+        'normality'
     ],
     entry_points={
         'console_scripts': [
