@@ -18,16 +18,15 @@ tables:
 joins:
     - foo_companies_company.id: fo_companies_director.company_id
 outputs:
-    - mapping:
-        schema:
-            $ref: http://data.occrp.org/schema/company.json
-        mapping:
-            name:
-                column: foo_companies_company.name
-            company_id:
-                column: foo_companies_company.id
-            directors:
-                mapping:
-                    name:
-                        column: fo_companies_director.name
+    - schema:
+        $ref: http://data.occrp.org/schema/company.json
+      mapping:
+        name:
+            column: foo_companies_company.name
+        company_id:
+            column: foo_companies_company.id
+        directors:
+            mapping:
+                name:
+                    column: fo_companies_director.name
 ```

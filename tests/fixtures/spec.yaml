@@ -6,3 +6,31 @@ tables:
     - financials
 joins:
     - financials.symbol: companies.symbol
+outputs:
+    companies:
+        schema:
+            $id: 'http://test.occrp.org/schema/company.json'
+            type: object
+            properties:
+                id:
+                    type: string
+                name:
+                    type: string
+                financials:
+                    type: object
+                    properties:
+                        price:
+                            type: float
+                        yield:
+                            type: float
+        mapping:
+            id:
+                column: companies.symbol
+            name:
+                column: companies.name
+            financials:
+                mapping:
+                    price:
+                        column: financials.price
+                    yield:
+                        column: financials.dividend_yield

@@ -28,7 +28,8 @@ setup(
     install_requires=[
         'jsonmapping',
         'sqlalchemy',
-        'pyyaml'
+        'pyyaml',
+        'click'
     ],
     tests_require=[
         'nose',
