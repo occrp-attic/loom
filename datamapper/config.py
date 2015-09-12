@@ -5,14 +5,15 @@ from sqlalchemy import create_engine
 from jsonschema import RefResolver
 
 from datamapper.util import ConfigException
+from datamapper.sinks import Sink
 
 
-class Config(object):
+class Config(dict):
     """ Parsing a configuration file. This specifies the database connection
     and the settings for each data sink. """
 
     def __init__(self, data, path=None):
-        self.data = data or {}
+        self.update(data)
         self.path = path
 
     @classmethod
@@ -23,7 +24,7 @@ class Config(object):
     @property
     def engine(self):
         if not hasattr(self, '_engine'):
-            database = self.data.get('database')
+            database = self.get('database')
             if database is None:
                 raise ConfigException("No database URI configued!")
             self._engine = create_engine(database)
@@ -42,3 +43,10 @@ class Config(object):
         if not hasattr(self, '_resolver'):
             self._resolver = RefResolver(self.base_uri, self.base_uri)
         return self._resolver
+
+    @property
+    def sink(self):
+        cls = Sink.by_name(self.get('sink'))
+        if cls is None:
+            raise ConfigException("No such sink type: %r" % self.get('sink'))
+        return cls

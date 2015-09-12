@@ -94,6 +94,10 @@ class Generator(object):
                 break
             yield dict(row.items())
 
+    @property
+    def mappings(self):
+        return self.spec.get('mappings', {}).keys()
+
     def generate(self, mapping_name, full_tables=False):
         """ Generate all the items produced by the given form. """
         mapping = self.spec.get('mappings', {}).get(mapping_name)

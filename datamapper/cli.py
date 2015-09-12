@@ -3,6 +3,7 @@ import logging
 import yaml
 import click
 
+from datamapper.util import DataMapperException
 from datamapper.config import Config
 from datamapper.generator import Generator
 
@@ -27,29 +28,37 @@ def cli(ctx, debug, config):
 
     ctx.obj['CONFIG'] = Config.from_path(config)
 
-def configure(ctx, spec_file, sink):
+def configure(ctx, spec_file):
     """ Set up the sink and the generator. """
     config = ctx.obj['CONFIG']
     spec = yaml.load(spec_file)
-    generator = Generator()
+    generator = Generator(config, spec)
+    sink = config.sink(config, generator)
+    return sink
+
 
 @cli.command('load')
 @click.argument('spec_file', type=click.File('r'))
-@click.argument('sink')
 @click.pass_context
-def load(ctx, spec_file, sink):
+def load(ctx, spec_file):
     """ Load data from the database into a sink. """
-
+    try:
+        sink = configure(ctx, spec_file)
+        sink.load()
+    except DataMapperException as dme:
+        raise click.ClickException(dme.message)
 
 
 @cli.command('clear')
 @click.argument('spec_file', type=click.File('r'))
-@click.argument('sink')
 @click.pass_context
-def clear(ctx, spec_file, sink):
+def clear(ctx, spec_file):
     """ Delete all data from a given spec in a sink. """
-    config = ctx.obj['CONFIG']
-    spec = yaml.load(spec_file)
+    try:
+        sink = configure(ctx, spec_file)
+        sink.clear()
+    except DataMapperException as dme:
+        raise click.ClickException(dme.message)
 
 
 if __name__ == '__main__':
