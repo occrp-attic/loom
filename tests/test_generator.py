@@ -44,18 +44,18 @@ class GeneratorTestCase(TestCase):
             pass
 
     def test_generate_partial_output(self):
-        comps = [r[1] for r in self.gen.generate('companies')]
+        comps = [r.raw for r in self.gen.generate('companies')]
         assert 'companies.symbol' in comps[0], comps[0]
         assert 'companies.sector' not in comps[0], comps[0]
         assert len(comps) == 496, len(comps)
 
     def test_generate_full_output(self):
-        comps = [r[1] for r in self.gen.generate('companies', full_tables=True)]
+        comps = [r.raw for r in self.gen.generate('companies', full_tables=True)]
         assert 'companies.sector' in comps[0], comps[0]
         assert len(comps) == 496, len(comps)
 
     def test_generate_mapping(self):
-        comps = [r[0] for r in self.gen.generate('companies')]
+        comps = [r.entity for r in self.gen.generate('companies')]
         assert 'id' in comps[0], comps[0]
         assert 'sector' not in comps[0], comps[0]
         assert isinstance(comps[0]['financials']['price'], float), comps[0]

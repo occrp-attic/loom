@@ -36,7 +36,7 @@ class Config(dict):
             config_uri = 'file:///tmp'
         else:
             config_uri = 'file://' + os.path.abspath(self.path)
-        return self.data.get('base_uri', config_uri)
+        return self.get('base_uri', config_uri)
 
     @property
     def resolver(self):

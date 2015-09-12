@@ -2,10 +2,11 @@ import logging
 
 from sqlalchemy.schema import MetaData, Table
 from sqlalchemy.sql.expression import select
-from jsonschema import RefResolver
 from jsonmapping import Mapper
 
 from datamapper.util import SpecException
+from datamapper.source import Source
+from datamapper.record import Record
 
 log = logging.getLogger(__name__)
 
@@ -17,6 +18,12 @@ class Generator(object):
     def __init__(self, config, spec):
         self.config = config
         self.spec = spec
+
+    @property
+    def source(self):
+        if not hasattr(self, '_source'):
+            self._source = Source(self.spec.get('source', {}))
+        return self._source
 
     @property
     def metadata(self):
@@ -120,7 +127,7 @@ class Generator(object):
 
         mapper = Mapper(mapping, self.config.resolver,
                         scope=self.config.base_uri)
-        for row in self._query(tables, _columns):
-            _, data = mapper.apply(row)
+        for raw in self._query(tables, _columns):
+            _, entity = mapper.apply(raw)
             # TODO: perform validation here?
-            yield data, row
+            yield Record(self.source, mapper.bind.path, entity, raw)

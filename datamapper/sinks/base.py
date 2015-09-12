@@ -9,6 +9,11 @@ class Sink(object):
         self.config = config
         self.generator = generator
 
+    def records(self):
+        for mapping in self.generator.mappings:
+            for record in self.generator.generate(mapping, full_tables=True):
+                yield record
+
     def load(self):
         raise NotImplementedError()
 
