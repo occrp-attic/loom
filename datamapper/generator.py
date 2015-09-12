@@ -10,7 +10,7 @@ from datamapper.util import SpecException
 log = logging.getLogger(__name__)
 
 
-class Transform(object):
+class Generator(object):
     """ Apply a mapping specification to generate JSON schema data from a
     SQL database using field mappings. """
 
