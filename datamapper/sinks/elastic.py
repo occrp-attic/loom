@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 
 from elasticsearch import Elasticsearch
 from elasticsearch.helpers import bulk
@@ -36,12 +37,15 @@ class ElasticSink(Sink):
         return self._doc_type
 
     def actions(self):
+        indexed_at = datetime.utcnow()
         for record in self.records():
+            data = record.to_dict()
+            data['indexed_at'] = indexed_at
             yield {
                 '_id': record.id,
                 '_type': self.doc_type,
                 '_index': self.index,
-                '_source': record.to_dict()
+                '_source': data
             }
 
     def load(self):
@@ -49,7 +53,8 @@ class ElasticSink(Sink):
                  self.config.get('elastic_host'), self.index)
         self.client.indices.create(index=self.index, ignore=400)
         # TODO generate a mapping.
-        bulk(self.client, self.actions(), stats_only=True)
+        bulk(self.client, self.actions(), stats_only=True,
+             chunk_size=1000)
 
     def clear(self):
         q = {}

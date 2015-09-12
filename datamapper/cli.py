@@ -13,10 +13,12 @@ log = logging.getLogger(__name__)
 @click.group()
 @click.option('--debug/--no-debug', default=False,
               help='Show log messages.')
+@click.option('--db', default=None,
+              help='A database URI.')
 @click.option('--config', '-c', required=True, type=click.Path(exists=True),
               help='A configuration file.')
 @click.pass_context
-def cli(ctx, debug, config):
+def cli(ctx, debug, db, config):
     """ Map data from a SQL database into a variety of data sinks. """
     ctx.obj = ctx.obj or {}
     ctx.obj['DEBUG'] = debug
@@ -28,7 +30,7 @@ def cli(ctx, debug, config):
     logging.getLogger('urllib3').setLevel(logging.WARNING)
     logging.getLogger('elasticsearch').setLevel(logging.WARNING)
 
-    ctx.obj['CONFIG'] = Config.from_path(config)
+    ctx.obj['CONFIG'] = Config.from_path(config, database=db)
 
 def configure(ctx, spec_file):
     """ Set up the sink and the generator. """

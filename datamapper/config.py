@@ -12,19 +12,20 @@ class Config(dict):
     """ Parsing a configuration file. This specifies the database connection
     and the settings for each data sink. """
 
-    def __init__(self, data, path=None):
+    def __init__(self, data, path=None, database=None):
         self.update(data)
         self.path = path
+        self.database = database
 
     @classmethod
-    def from_path(cls, path):
+    def from_path(cls, path, **kwargs):
         with open(path, 'r') as fh:
-            return cls(yaml.load(fh), path=path)
+            return cls(yaml.load(fh), path=path, **kwargs)
 
     @property
     def engine(self):
         if not hasattr(self, '_engine'):
-            database = self.get('database')
+            database = self.database or self.get('database')
             if database is None:
                 raise ConfigException("No database URI configued!")
             self._engine = create_engine(database)
