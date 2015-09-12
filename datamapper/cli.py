@@ -4,6 +4,7 @@ import yaml
 import click
 
 from datamapper.config import Config
+from datamapper.generator import Generator
 
 log = logging.getLogger(__name__)
 
@@ -26,15 +27,19 @@ def cli(ctx, debug, config):
 
     ctx.obj['CONFIG'] = Config.from_path(config)
 
+def configure(ctx, spec_file, sink):
+    """ Set up the sink and the generator. """
+    config = ctx.obj['CONFIG']
+    spec = yaml.load(spec_file)
+    generator = Generator()
 
 @cli.command('load')
 @click.argument('spec_file', type=click.File('r'))
 @click.argument('sink')
 @click.pass_context
-def load(ctx, raw, spec_file, sink):
+def load(ctx, spec_file, sink):
     """ Load data from the database into a sink. """
-    config = ctx.obj['CONFIG']
-    spec = yaml.load(spec_file)
+
 
 
 @cli.command('clear')

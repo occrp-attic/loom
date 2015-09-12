@@ -22,10 +22,12 @@ class Config(object):
 
     @property
     def engine(self):
-        database = self.data.get('database')
-        if database is None:
-            raise ConfigException("No database URI configued!")
-        return create_engine(database)
+        if not hasattr(self, '_engine'):
+            database = self.data.get('database')
+            if database is None:
+                raise ConfigException("No database URI configued!")
+            self._engine = create_engine(database)
+        return self._engine
 
     @property
     def base_uri(self):

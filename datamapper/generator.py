@@ -14,15 +14,16 @@ class Generator(object):
     """ Apply a mapping specification to generate JSON schema data from a
     SQL database using field mappings. """
 
-    def __init__(self, engine, spec, resolver=None, scope=None):
-        self.engine = engine
-        self.metadata = MetaData()
-        self.metadata.bind = self.engine
+    def __init__(self, config, spec):
+        self.config = config
         self.spec = spec
-        self.scope = scope or 'http://schema.occrp.org/'
-        if resolver is None:
-            resolver = RefResolver(self.scope, self.scope)
-        self.resolver = resolver
+
+    @property
+    def metadata(self):
+        if not hasattr(self, '_metadata'):
+            self._metadata = MetaData()
+            self._metadata.bind = self.config.engine
+        return self._metadata
 
     @property
     def tables(self):
@@ -81,12 +82,12 @@ class Generator(object):
         q = select(columns=columns, from_obj=tables)
         for (left, right) in self.joins:
             if left.table in tables and right.table in tables:
-                q = q.where(left==right)
+                q = q.where(left == right)
 
         log.info("Query: %s", q)
         # TODO: see if this scales (i.e. the cursor loads data progressively)
         # else introduce pagination and sorting.
-        rp = self.engine.execute(q)
+        rp = self.config.engine.execute(q)
         while True:
             row = rp.fetchone()
             if row is None:
@@ -113,7 +114,8 @@ class Generator(object):
             alias = '%s.%s' % (column.table.name, column.name)
             _columns.append(column.label(alias))
 
-        mapper = Mapper(mapping, self.resolver, scope=self.scope)
+        mapper = Mapper(mapping, self.config.resolver,
+                        scope=self.config.base_uri)
         for row in self._query(tables, _columns):
             _, data = mapper.apply(row)
             # TODO: perform validation here?
