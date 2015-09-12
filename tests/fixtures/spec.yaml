@@ -6,7 +6,7 @@ tables:
     - financials
 joins:
     - financials.symbol: companies.symbol
-outputs:
+mappings:
     companies:
         schema:
             id: http://test.occrp.org/schema/company.json

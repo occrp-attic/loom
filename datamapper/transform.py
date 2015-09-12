@@ -14,13 +14,14 @@ class Transform(object):
     """ Apply a mapping specification to generate JSON schema data from a
     SQL database using field mappings. """
 
-    def __init__(self, engine, spec, resolver=None, scope='http://schema.occrp.org'):
+    def __init__(self, engine, spec, resolver=None, scope=None):
         self.engine = engine
         self.metadata = MetaData()
         self.metadata.bind = self.engine
         self.spec = spec
+        self.scope = scope or 'http://schema.occrp.org/'
         if resolver is None:
-            resolver = RefResolver(scope, scope)
+            resolver = RefResolver(self.scope, self.scope)
         self.resolver = resolver
 
     @property
@@ -83,6 +84,8 @@ class Transform(object):
                 q = q.where(left==right)
 
         log.info("Query: %s", q)
+        # TODO: see if this scales (i.e. the cursor loads data progressively)
+        # else introduce pagination and sorting.
         rp = self.engine.execute(q)
         while True:
             row = rp.fetchone()
@@ -90,13 +93,13 @@ class Transform(object):
                 break
             yield dict(row.items())
 
-    def generate(self, output_name, full_tables=False):
-        """ Generate all the items produced by the given output. """
-        output = self.spec.get('outputs', {}).get(output_name)
-        if output is None:
-            raise SpecException("No such output: %s", output_name)
+    def generate(self, mapping_name, full_tables=False):
+        """ Generate all the items produced by the given form. """
+        mapping = self.spec.get('mappings', {}).get(mapping_name)
+        if mapping is None:
+            raise SpecException("No such mapping: %s", mapping_name)
 
-        columns = set(self.get_column(c) for c in self._scan_columns(output))
+        columns = set(self.get_column(c) for c in self._scan_columns(mapping))
         tables = set([c.table for c in columns])
         if full_tables:
             # NOTE: this is intentionally not just selecting the required
@@ -110,7 +113,8 @@ class Transform(object):
             alias = '%s.%s' % (column.table.name, column.name)
             _columns.append(column.label(alias))
 
-        mapper = Mapper(output, self.resolver)
+        mapper = Mapper(mapping, self.resolver, scope=self.scope)
         for row in self._query(tables, _columns):
             _, data = mapper.apply(row)
+            # TODO: perform validation here?
             yield data, row
