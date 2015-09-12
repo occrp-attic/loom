@@ -39,7 +39,11 @@ setup(
         'normality'
     ],
     entry_points={
+        'datamapper.sinks': [
+            'jsondir = datamapper.sinks.jsondir:JSONDirectorySink'
+        ],
         'console_scripts': [
+            'datamapper = datamapper.cli:cli'
         ]
     }
 )

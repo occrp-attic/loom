@@ -1,4 +1,5 @@
 source:
+    slug: us_standard-and-poor
     title: "Standard and Poor"
     url: https://github.com/datasets/s-and-p-500-companies
 tables:
