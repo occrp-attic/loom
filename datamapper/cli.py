@@ -25,6 +25,8 @@ def cli(ctx, debug, config):
     level = logging.DEBUG if debug else logging.INFO
     logging.basicConfig(level=level, format=fmt)
     logging.getLogger('requests').setLevel(logging.WARNING)
+    logging.getLogger('urllib3').setLevel(logging.WARNING)
+    logging.getLogger('elasticsearch').setLevel(logging.WARNING)
 
     ctx.obj['CONFIG'] = Config.from_path(config)
 

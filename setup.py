@@ -28,6 +28,7 @@ setup(
     install_requires=[
         'jsonmapping',
         'sqlalchemy',
+        'elasticsearch',
         'pyyaml',
         'click'
     ],
@@ -40,7 +41,8 @@ setup(
     ],
     entry_points={
         'datamapper.sinks': [
-            'jsondir = datamapper.sinks.jsondir:JSONDirectorySink'
+            'jsondir = datamapper.sinks.jsondir:JSONDirectorySink',
+            'elastic = datamapper.sinks.elastic:ElasticSink'
         ],
         'console_scripts': [
             'datamapper = datamapper.cli:cli'
