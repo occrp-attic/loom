@@ -41,12 +41,12 @@ class TransformTestCase(TestCase):
             pass
 
     def test_generate_partial_output(self):
-        comps = list(self.tf.generate('companies'))
+        comps = [r[1] for r in self.tf.generate('companies')]
         assert 'companies.symbol' in comps[0], comps[0]
         assert 'companies.sector' not in comps[0], comps[0]
         assert len(comps) == 496, len(comps)
 
     def test_generate_full_output(self):
-        comps = list(self.tf.generate('companies', full_tables=True))
+        comps = [r[1] for r in self.tf.generate('companies', full_tables=True)]
         assert 'companies.sector' in comps[0], comps[0]
         assert len(comps) == 496, len(comps)

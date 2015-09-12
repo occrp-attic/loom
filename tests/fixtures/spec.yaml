@@ -9,7 +9,7 @@ joins:
 outputs:
     companies:
         schema:
-            $id: 'http://test.occrp.org/schema/company.json'
+            id: http://test.occrp.org/schema/company.json
             type: object
             properties:
                 id:
@@ -20,12 +20,14 @@ outputs:
                     type: object
                     properties:
                         price:
-                            type: float
+                            type: number
                         yield:
-                            type: float
+                            type: number
         mapping:
             id:
-                column: companies.symbol
+                columns:
+                    - companies.symbol
+                    - financials.symbol
             name:
                 column: companies.name
             financials:

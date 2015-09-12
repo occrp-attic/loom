@@ -2,6 +2,8 @@ import logging
 
 from sqlalchemy.schema import MetaData, Table
 from sqlalchemy.sql.expression import select
+from jsonschema import RefResolver
+from jsonmapping import Mapper
 
 from datamapper.util import SpecException
 
@@ -12,11 +14,14 @@ class Transform(object):
     """ Apply a mapping specification to generate JSON schema data from a
     SQL database using field mappings. """
 
-    def __init__(self, engine, spec):
+    def __init__(self, engine, spec, resolver=None, scope='http://schema.occrp.org'):
         self.engine = engine
         self.metadata = MetaData()
         self.metadata.bind = self.engine
         self.spec = spec
+        if resolver is None:
+            resolver = RefResolver(scope, scope)
+        self.resolver = resolver
 
     @property
     def tables(self):
@@ -105,5 +110,7 @@ class Transform(object):
             alias = '%s.%s' % (column.table.name, column.name)
             _columns.append(column.label(alias))
 
+        mapper = Mapper(output, self.resolver)
         for row in self._query(tables, _columns):
-            yield row
+            data = mapper.apply(row)
+            yield data, row
