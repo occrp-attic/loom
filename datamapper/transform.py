@@ -112,5 +112,5 @@ class Transform(object):
 
         mapper = Mapper(output, self.resolver)
         for row in self._query(tables, _columns):
-            data = mapper.apply(row)
+            _, data = mapper.apply(row)
             yield data, row
