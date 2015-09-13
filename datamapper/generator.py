@@ -130,4 +130,5 @@ class Generator(object):
         for raw in self._query(tables, _columns):
             _, entity = mapper.apply(raw)
             # TODO: perform validation here?
-            yield Record(self.source, mapper.bind.path, entity, raw)
+            yield Record(self.source, mapping_name, mapper.bind.path,
+                         entity, raw)

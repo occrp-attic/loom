@@ -4,8 +4,11 @@ from datamapper.util import make_key
 class Record(object):
     """ A generated record. """
 
-    def __init__(self, source, schema, entity, raw):
+    __slots__ = ['source', 'mapping', 'schema', 'entity', 'raw']
+
+    def __init__(self, source, mapping, schema, entity, raw):
         self.source = source
+        self.mapping = mapping
         self.schema = schema
         self.entity = entity
         self.raw = raw

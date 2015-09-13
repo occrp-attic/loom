@@ -1,6 +1,7 @@
 import logging
 from datetime import datetime
 
+from normality import slugify
 from elasticsearch import Elasticsearch
 from elasticsearch.helpers import bulk
 
@@ -30,20 +31,23 @@ class ElasticSink(Sink):
                 raise ConfigException("No 'elastic_index' is configured.")
         return self._index
 
-    @property
-    def doc_type(self):
-        if not hasattr(self, '_doc_type'):
-            self._doc_type = self.config.get('elastic_type', 'entity')
-        return self._doc_type
+    def make_doc_type(self, record):
+        doc_type = '%s-%s' % (record.source.slug, record.mapping)
+        doc_type = slugify(doc_type)
+
+        return doc_type
 
     def actions(self):
         indexed_at = datetime.utcnow()
+        doc_type = None
         for record in self.records():
+            if doc_type is None:
+                doc_type = self.make_doc_type(record)
             data = record.to_dict()
             data['indexed_at'] = indexed_at
             yield {
                 '_id': record.id,
-                '_type': self.doc_type,
+                '_type': doc_type,
                 '_index': self.index,
                 '_source': data
             }
