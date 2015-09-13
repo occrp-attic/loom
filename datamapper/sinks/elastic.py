@@ -2,10 +2,13 @@ import logging
 from datetime import datetime
 
 from normality import slugify
+from jsonmapping import SchemaVisitor
 from elasticsearch import Elasticsearch
 from elasticsearch.helpers import bulk
 
 from datamapper.sinks.base import Sink
+from datamapper.sinks.elastic_mapping import BASE_MAPPING
+from datamapper.sinks.elastic_mapping import generate_schema_mapping
 from datamapper.util import ConfigException
 
 log = logging.getLogger(__name__)
@@ -34,13 +37,26 @@ class ElasticSink(Sink):
     def make_doc_type(self, record):
         doc_type = '%s-%s' % (record.source.slug, record.mapping)
         doc_type = slugify(doc_type)
+        mapping = self.client.indices.get_mapping(index=self.index,
+                                                  doc_type=doc_type)
+        mapping = mapping.get(self.index, {}).get('mappings', {})
+        mapping = mapping.get(doc_type, BASE_MAPPING)
 
+        visitor = SchemaVisitor({'$ref': record.schema}, self.config.resolver)
+        entity = generate_schema_mapping(visitor, set())
+        mapping['properties']['entity'] = entity
+        try:
+            self.client.indices.put_mapping(index=self.index,
+                                            doc_type=doc_type,
+                                            body={doc_type: mapping})
+        except Exception as ex:
+            log.warning("Cannot update data mapping: %s", ex)
         return doc_type
 
     def actions(self):
         indexed_at = datetime.utcnow()
         doc_type = None
-        for record in self.records():
+        for i, record in enumerate(self.records()):
             if doc_type is None:
                 doc_type = self.make_doc_type(record)
             data = record.to_dict()
@@ -52,15 +68,19 @@ class ElasticSink(Sink):
                 '_source': data
             }
 
+            if i > 0 and i % 10000 == 0:
+                log.info("Indexing to %s: %s records", doc_type, i)
+
     def load(self):
         log.info('Indexing to: %r (index: %r)',
                  self.config.get('elastic_host'), self.index)
         self.client.indices.create(index=self.index, ignore=400)
-        # TODO generate a mapping.
         bulk(self.client, self.actions(), stats_only=True,
              chunk_size=1000)
 
     def clear(self):
-        q = {}
-        self.client.delete_by_query(index=self.index, doc_type=self.doc_type,
-                                    body=q)
+        pass
+        # TODO: how to do this properly.
+        # q = {}
+        # self.client.delete_by_query(index=self.index, doc_type=self.doc_type,
+        #                             body=q)

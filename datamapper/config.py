@@ -45,6 +45,10 @@ class Config(dict):
             self._resolver = RefResolver(self.base_uri, self.base_uri)
         return self._resolver
 
+    def add_schema(self, schema):
+        if 'id' in schema and schema['id'] not in self.resolver.store:
+            self.resolver.store[schema['id']] = schema
+
     @property
     def sink(self):
         cls = Sink.by_name(self.get('sink'))

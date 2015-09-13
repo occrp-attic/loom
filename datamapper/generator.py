@@ -110,6 +110,7 @@ class Generator(object):
         mapping = self.spec.get('mappings', {}).get(mapping_name)
         if mapping is None:
             raise SpecException("No such mapping: %s", mapping_name)
+        self.config.add_schema(mapping['schema'])
 
         columns = set(self.get_column(c) for c in self._scan_columns(mapping))
         tables = set([c.table for c in columns])
