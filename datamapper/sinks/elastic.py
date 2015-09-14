@@ -35,8 +35,7 @@ class ElasticSink(Sink):
         return self._index
 
     def make_doc_type(self, record):
-        doc_type = '%s-%s' % (record.source.slug, record.mapping)
-        doc_type = slugify(doc_type)
+        doc_type = self.config.get_alias(record.schema)
         mapping = self.client.indices.get_mapping(index=self.index,
                                                   doc_type=doc_type)
         mapping = mapping.get(self.index, {}).get('mappings', {})
