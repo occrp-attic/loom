@@ -5,7 +5,7 @@ from unittest import TestCase
 
 from util import create_fixtures, FIXTURE_PATH
 
-from datamapper.config import Config
+from datamapper.config import Config, ConfigException
 from datamapper.generator import Generator, SpecException
 
 class GeneratorTestCase(TestCase):
@@ -42,6 +42,17 @@ class GeneratorTestCase(TestCase):
     def test_invalid_output(self):
         for x in self.gen.generate('knuffels'):
             pass
+
+    def test_make_alias(self):
+        alias = self.config.get_alias('http://occrp.org/foo/bar.json#xxx')
+        assert alias == 'bar', alias
+        again = self.config.get_alias('http://occrp.org/foo/bar.json#xxx')
+        assert again == alias, again
+
+    @raises(ConfigException)
+    def test_invalid_alias(self):
+        self.config.get_alias('http://occrp.org/foo/bar.json#xxx')
+        self.config.get_alias('http://foo.org/xxx/bar.json')
 
     def test_generate_partial_output(self):
         comps = [r.raw for r in self.gen.generate('companies')]
