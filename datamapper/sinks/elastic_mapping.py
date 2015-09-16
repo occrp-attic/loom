@@ -1,3 +1,4 @@
+from jsonmapping import SchemaVisitor
 
 
 BASE_MAPPING = {
@@ -9,15 +10,10 @@ BASE_MAPPING = {
         "schema": {"type": "string", "index": "not_analyzed"},
         "indexed_at": {"type": "date", "index": "not_analyzed"},
         "raw": {
-            "type": "object"
+            "type": "object",
+            "properties": {}
         },
-        "source": {
-            "properties": {
-                "slug": {"type": "string", "index": "not_analyzed"},
-                "title": {"type": "string", "index": "not_analyzed"},
-                "url": {"type": "string", "index": "not_analyzed"}
-            }
-        }
+        "source": {"type": "string", "index": "not_analyzed"}
     }
 }
 
@@ -48,3 +44,18 @@ def generate_schema_mapping(visitor, path):
         if 'boolean' in visitor.types:
             type_name = 'boolean'
         return {'type': type_name, 'index': 'not_analyzed'}
+
+
+def generate_mapping(mapping, index, doc_type, record, resolver):
+    """ Generate a mapping. """
+    mapping = mapping.get(index, {}).get('mappings', {})
+    mapping = mapping.get(doc_type, BASE_MAPPING)
+
+    val = {'type': 'string', 'index': 'analyzed', 'store': True}
+    for field in record.raw.keys():
+        mapping['properties']['raw']['properties'][field] = val
+
+    visitor = SchemaVisitor({'$ref': record.schema}, resolver)
+    entity = generate_schema_mapping(visitor, set())
+    mapping['properties']['entity'] = entity
+    return mapping

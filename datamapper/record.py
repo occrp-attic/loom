@@ -22,7 +22,7 @@ class Record(object):
 
     def to_dict(self):
         return {
-            'source': self.source.to_dict(),
+            'source': self.source.slug,
             'id': self.id,
             'entity': self.entity,
             'schema': self.schema,

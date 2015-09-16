@@ -1,17 +1,16 @@
 import logging
 from datetime import datetime
 
-from normality import slugify
-from jsonmapping import SchemaVisitor
 from elasticsearch import Elasticsearch
 from elasticsearch.helpers import bulk
 
 from datamapper.sinks.base import Sink
-from datamapper.sinks.elastic_mapping import BASE_MAPPING
-from datamapper.sinks.elastic_mapping import generate_schema_mapping
+from datamapper.sinks.elastic_mapping import generate_mapping
 from datamapper.util import ConfigException
 
 log = logging.getLogger(__name__)
+
+SOURCE_DOC_TYPE = 'source'
 
 
 class ElasticSink(Sink):
@@ -34,16 +33,21 @@ class ElasticSink(Sink):
                 raise ConfigException("No 'elastic_index' is configured.")
         return self._index
 
+    def index_source(self, source):
+        """ This is a work-around for the front-end to be able to easily get
+        access to the sources: each source is indexed in a special document
+        type. """
+        self.client.index(index=self.index, doc_type=SOURCE_DOC_TYPE,
+                          id=source.slug, body=source.to_dict())
+
     def make_doc_type(self, record):
         doc_type = self.config.get_alias(record.schema)
+        if doc_type == SOURCE_DOC_TYPE:
+            raise ConfigException("Invalid schema alias: %s" % doc_type)
         mapping = self.client.indices.get_mapping(index=self.index,
                                                   doc_type=doc_type)
-        mapping = mapping.get(self.index, {}).get('mappings', {})
-        mapping = mapping.get(doc_type, BASE_MAPPING)
-
-        visitor = SchemaVisitor({'$ref': record.schema}, self.config.resolver)
-        entity = generate_schema_mapping(visitor, set())
-        mapping['properties']['entity'] = entity
+        mapping = generate_mapping(mapping, self.index, doc_type, record,
+                                   self.config.resolver)
         try:
             self.client.indices.put_mapping(index=self.index,
                                             doc_type=doc_type,
@@ -58,6 +62,7 @@ class ElasticSink(Sink):
         for i, record in enumerate(self.records()):
             if doc_type is None:
                 doc_type = self.make_doc_type(record)
+                self.index_source(record.source)
             data = record.to_dict()
             data['indexed_at'] = indexed_at
             yield {
@@ -78,7 +83,14 @@ class ElasticSink(Sink):
              chunk_size=1000)
 
     def clear(self):
-        pass
+        # for mapping_name in self.generator.mappings:
+        #     mapping = self.generator.spec.get('mappings', {}).get(mapping_name)
+        #     schema = mapping.get('schema')
+        #     schema = schema.get('$ref', schema.get('id'))
+        #     doc_type = self.config.get_alias(schema)
+        #     self.client.indices.delete_mapping(index=self.index,
+        #                                        doc_type=doc_type)
+        self.client.indices.delete(index=self.index, ignore=400)
         # TODO: how to do this properly.
         # q = {}
         # self.client.delete_by_query(index=self.index, doc_type=self.doc_type,
