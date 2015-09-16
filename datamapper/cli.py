@@ -32,14 +32,6 @@ def cli(ctx, debug, db, config):
 
     ctx.obj['CONFIG'] = Config.from_path(config, database=db)
 
-def configure(ctx, spec_file):
-    """ Set up the sink and the generator. """
-    config = ctx.obj['CONFIG']
-    spec = yaml.load(spec_file)
-    generator = Generator(config, spec)
-    sink = config.sink(config, generator)
-    return sink
-
 
 @cli.command('load')
 @click.argument('spec_file', type=click.File('r'))
@@ -47,20 +39,11 @@ def configure(ctx, spec_file):
 def load(ctx, spec_file):
     """ Load data from the database into a sink. """
     try:
-        sink = configure(ctx, spec_file)
+        config = ctx.obj['CONFIG']
+        spec = yaml.load(spec_file)
+        generator = Generator(config, spec)
+        sink = config.sink(config, generator)
         sink.load()
-    except DataMapperException as dme:
-        raise click.ClickException(dme.message)
-
-
-@cli.command('clear')
-@click.argument('spec_file', type=click.File('r'))
-@click.pass_context
-def clear(ctx, spec_file):
-    """ Delete all data from a given spec in a sink. """
-    try:
-        sink = configure(ctx, spec_file)
-        sink.clear()
     except DataMapperException as dme:
         raise click.ClickException(dme.message)
 

@@ -17,9 +17,6 @@ class Sink(object):
     def load(self):
         raise NotImplementedError()
 
-    def clear(self):
-        raise NotImplementedError()
-
     @classmethod
     def by_name(cls, name):
         for ep in iter_entry_points('datamapper.sinks'):

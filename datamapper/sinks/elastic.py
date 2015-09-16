@@ -81,17 +81,3 @@ class ElasticSink(Sink):
         self.client.indices.create(index=self.index, ignore=400)
         bulk(self.client, self.actions(), stats_only=True,
              chunk_size=1000)
-
-    def clear(self):
-        # for mapping_name in self.generator.mappings:
-        #     mapping = self.generator.spec.get('mappings', {}).get(mapping_name)
-        #     schema = mapping.get('schema')
-        #     schema = schema.get('$ref', schema.get('id'))
-        #     doc_type = self.config.get_alias(schema)
-        #     self.client.indices.delete_mapping(index=self.index,
-        #                                        doc_type=doc_type)
-        self.client.indices.delete(index=self.index, ignore=400)
-        # TODO: how to do this properly.
-        # q = {}
-        # self.client.delete_by_query(index=self.index, doc_type=self.doc_type,
-        #                             body=q)

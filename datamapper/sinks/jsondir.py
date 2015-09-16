@@ -28,7 +28,3 @@ class JSONDirectorySink(Sink):
                 pass
             with open(path, 'w') as fh:
                 json.dump(record.to_dict(), fh)
-
-    def clear(self):
-        # TODO
-        pass
