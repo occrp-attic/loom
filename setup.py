@@ -27,6 +27,7 @@ setup(
     test_suite='nose.collector',
     install_requires=[
         'jsonmapping',
+        'jsongraph',
         'sqlalchemy',
         'elasticsearch',
         'pyyaml',
@@ -42,6 +43,7 @@ setup(
     entry_points={
         'datamapper.sinks': [
             'jsondir = datamapper.sinks.jsondir:JSONDirectorySink',
+            'nquads = datamapper.sinks.nquads:NQuadsSink',
             'elastic = datamapper.sinks.elastic:ElasticSink'
         ],
         'console_scripts': [
