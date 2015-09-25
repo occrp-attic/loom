@@ -8,6 +8,7 @@ from util import create_fixtures, FIXTURE_PATH
 from datamapper.config import Config, ConfigException
 from datamapper.generator import Generator, SpecException
 
+
 class GeneratorTestCase(TestCase):
 
     def setUp(self):
@@ -23,20 +24,24 @@ class GeneratorTestCase(TestCase):
 
     def test_load_spec(self):
         assert len(self.gen.tables) == 2
-        col = self.gen.get_column('financials.price')
+        col = self.gen.get_column('fin.price')
         assert col is not None, col
 
     @raises(SpecException)
     def test_invalid_table(self):
-        col = self.gen.get_column('financials_xxx.price')
+        self.gen.get_column('financials_xxx.price')
 
     @raises(SpecException)
     def test_no_table(self):
-        col = self.gen.get_column('price')
+        self.gen.get_column('price')
 
     @raises(SpecException)
     def test_invalid_column(self):
-        col = self.gen.get_column('financials.value')
+        self.gen.get_column('fin.value')
+
+    @raises(SpecException)
+    def test_unaliased_table(self):
+        self.gen.get_column('financials.value')
 
     @raises(SpecException)
     def test_invalid_output(self):

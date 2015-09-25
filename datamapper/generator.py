@@ -36,8 +36,16 @@ class Generator(object):
     def tables(self):
         if not hasattr(self, '_tables'):
             self._tables = []
-            for table_name in self.spec.get('tables', []):
+            for table_obj in self.spec.get('tables', []):
+                table_name, table_alias = table_obj, None
+                if isinstance(table_obj, dict):
+                    table_name = table_obj.get('table')
+                    table_alias = table_obj.get('alias')
+
                 table = Table(table_name, self.metadata, autoload=True)
+                if table_alias is not None:
+                    table = table.alias(table_alias)
+
                 self._tables.append(table)
         return self._tables
 

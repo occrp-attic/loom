@@ -4,9 +4,10 @@ source:
     url: https://github.com/datasets/s-and-p-500-companies
 tables:
     - companies
-    - financials
+    - table: financials
+      alias: fin
 joins:
-    - financials.symbol: companies.symbol
+    - fin.symbol: companies.symbol
 mappings:
     companies:
         schema:
@@ -28,12 +29,12 @@ mappings:
             id:
                 columns:
                     - companies.symbol
-                    - financials.symbol
+                    - fin.symbol
             name:
                 column: companies.name
             financials:
                 mapping:
                     price:
-                        column: financials.price
+                        column: fin.price
                     yield:
-                        column: financials.dividend_yield
+                        column: fin.dividend_yield
