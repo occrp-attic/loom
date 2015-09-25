@@ -40,7 +40,7 @@ def generate_schema_mapping(visitor, path):
         if 'number' in visitor.types:
             type_name = 'float'
         if 'integer' in visitor.types:
-            type_name = 'integer'
+            type_name = 'long'
         if 'boolean' in visitor.types:
             type_name = 'boolean'
         return {'type': type_name, 'index': 'not_analyzed'}
