@@ -50,7 +50,7 @@ class RDFSink(Sink):
                 elapsed = time.time() - begin
                 per_record = float(elapsed) / float(i)
                 speed = per_record * 1000
-                log.info("Generaring %r RDF: %s records (speed: %s)", mapping, i, speed)
+                log.info("Generating %r: %s records (speed: %s)", mapping, i, speed)
 
         outfh.close()
 
