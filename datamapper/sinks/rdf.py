@@ -1,6 +1,4 @@
 import os
-import json
-import shutil
 import logging
 from jsongraph import Graph
 
@@ -10,8 +8,8 @@ from datamapper.util import ConfigException
 log = logging.getLogger(__name__)
 
 
-class NQuadsSink(Sink):
-    """ Generate NQuad files from the incoming records. """
+class RDFSink(Sink):
+    """ Generate RDF files from the incoming records. """
 
     def make_context(self, record):
         graph = Graph(self.config.base_uri, resolver=self.config.resolver)
@@ -21,9 +19,9 @@ class NQuadsSink(Sink):
         return graph.context(meta=record.source.to_dict())
 
     def get_path(self, record, section):
-        path = self.config.get('nquads_path')
+        path = self.config.get('rdf_path')
         if path is None:
-            raise ConfigException("No 'nquads_path' is configured.")
+            raise ConfigException("No 'rdf_path' is configured.")
         doc_type = self.config.get_alias(record.schema)
         file_name = '%s.%s.nq' % (doc_type, section)
         return os.path.join(path, record.source.slug, file_name)
@@ -50,7 +48,7 @@ class NQuadsSink(Sink):
                 doc_type = self.config.get_alias(record.schema)
                 context.add(doc_type, record.entity)
                 if i > 0 and i % 10000 == 0:
-                    log.info("Generaring %r NQuads: %s records", doc_type, i)
+                    log.info("Generaring %r RDF: %s records", doc_type, i)
                 if i > 0 and i % 100000 == 0:
                     self.store(context, record, section)
                     context = None

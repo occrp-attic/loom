@@ -43,7 +43,7 @@ setup(
     entry_points={
         'datamapper.sinks': [
             'jsondir = datamapper.sinks.jsondir:JSONDirectorySink',
-            'nquads = datamapper.sinks.nquads:NQuadsSink',
+            'rdf = datamapper.sinks.rdf:RDFSink',
             'elastic = datamapper.sinks.elastic:ElasticSink'
         ],
         'console_scripts': [
