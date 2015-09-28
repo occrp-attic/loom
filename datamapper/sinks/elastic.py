@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime
+from pprint import pprint  # noqa
 
 from elasticsearch import Elasticsearch
 from elasticsearch.helpers import bulk
