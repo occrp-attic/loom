@@ -81,15 +81,19 @@ class Generator(object):
     def _scan_columns(self, obj):
         """ Find out which columns are accessed by a particular output
         mapping. """
-        columns = set()
-        if 'column' in obj:
-            columns.add(obj['column'])
-        if 'columns' in obj:
-            columns = columns.union(obj['columns'])
-        if 'mapping' in obj:
-            for o in obj['mapping'].values():
-                columns = columns.union(self._scan_columns(o))
-        return columns
+        columns = []
+        if isinstance(obj, dict):
+            if 'columns' in obj:
+                columns.extend(obj['columns'])
+            if 'column' in obj:
+                columns.append(obj['column'])
+            if 'mapping' in obj:
+                for o in obj['mapping'].values():
+                    columns.extend(self._scan_columns(o))
+        else:
+            for o in obj:
+                columns.extend(self._scan_columns(o))
+        return set(columns)
 
     def _query(self, tables, columns):
         """ Generate a query and iterate over the result cursor. This will
