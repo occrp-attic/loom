@@ -3,8 +3,10 @@ import time
 import logging
 import requests
 
+from rdflib import Literal
 from jsongraph.binding import Binding
 from jsongraph.triplify import triplify
+from jsongraph.vocab import PRED
 
 from datamapper.sinks.base import Sink
 from datamapper.util import ConfigException
@@ -23,6 +25,10 @@ class Chunk(object):
         self.config = config
         self.length = 0
 
+        # TODO: make this more generic.
+        self.source_pred = PRED['sources']
+        self.source_obj = Literal(record.source.slug)
+
         path = self.config.get('rdf_path')
         if path is None:
             raise ConfigException("No 'rdf_path' is configured.")
@@ -34,9 +40,21 @@ class Chunk(object):
             pass
         self.fh = open(self.path, 'w')
 
+    def add_sources(self, triples):
+        """ This is slightly hacky: I want all subjects to have provenance
+        information attached, so this will just inspect the triples emitted
+        by the generator and attach one sourcing predicate for each subject
+        that has been seen. """
+        subjects = set()
+        for s, p, o in triples:
+            subjects.add(s)
+        for s in subjects:
+            triples.append((s, self.source_pred, self.source_obj))
+        return triples
+
     def write(self, triples):
         output = []
-        for t in triples:
+        for t in self.add_sources(triples):
             output.extend((t[0].n3(), t[1].n3(), t[2].n3(), '.\n'))
         text = ' '.join(output).encode('utf-8')
         self.length += len(text)
