@@ -1,65 +1,10 @@
 import time
 import logging
-import requests
-
-from rdflib import Literal
-
-from jsongraph.vocab import PRED
 
 from datamapper.model import Binding, triplify
 from datamapper.generator import Generator
-from datamapper.util import ConfigException
 
 log = logging.getLogger(__name__)
-
-
-class Chunk(object):
-    """ A size-limited chunk of data, which is to be written to
-    an output file. """
-
-    def __init__(self, config, mapping, source):
-        self.mapping = mapping
-        self.config = config
-        self.cache = []
-
-        # TODO: make this more generic.
-        self.source_pred = PRED['sources']
-        self.source_obj = Literal(source)
-
-        store = config.get('store')
-        self.endpoint = store.get('data') or store.get('update')
-        if self.endpoint is None:
-            raise ConfigException("No store URL configured!")
-
-    def add_sources(self, triples):
-        """ This is slightly hacky: I want all subjects to have provenance
-        information attached, so this will just inspect the triples emitted
-        by the generator and attach one sourcing predicate for each subject
-        that has been seen. """
-        subjects = set()
-        for s, p, o in triples:
-            subjects.add(s)
-        for s in subjects:
-            triples.append((s, self.source_pred, self.source_obj))
-        return triples
-
-    def write(self, triples):
-        for t in self.add_sources(triples):
-            self.cache.extend((t[0].n3(), t[1].n3(), t[2].n3(), '.'))
-
-    @property
-    def full(self):
-        return len(self.cache) > 4 * 10000
-
-    def flush(self):
-        log.info("Uploading data to: %r.", self.endpoint)
-        # headers = {'Content-Type': 'application/sparql-update'}
-        headers = {'Content-Type': 'text/turtle'}
-        data = ' '.join(self.cache).encode('utf-8')
-        res = requests.post(self.endpoint, data=data, headers=headers)
-        if res.status_code > 300:
-            log.warning("Update error: %s", res.content)
-        self.cache = []
 
 
 class Mapper(object):
@@ -67,8 +12,6 @@ class Mapper(object):
 
     def __init__(self, config, model):
         self.config = config
-        endpoint = self.config.graph.store.update_endpoint
-        self.config['rdf_endpoint'] = endpoint
         self.generator = Generator(config, model)
 
     def records(self, mapping):
@@ -82,7 +25,7 @@ class Mapper(object):
             _, triples = triplify(binding)
             for triple in triples:
                 yield {
-                    'subject': triple[0],
+                    'subject': triple[0].n3(),
                     'predicate': triple[1],
                     'object': triple[2].n3(),
                     'source': self.generator.source,

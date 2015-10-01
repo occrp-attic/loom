@@ -3,7 +3,7 @@ from rdflib import Literal, URIRef
 from jsonmapping import SchemaVisitor
 
 from jsongraph.util import is_url, safe_uriref
-from jsongraph.vocab import BNode, PRED, ID
+from jsongraph.vocab import BNode, ID
 
 
 class Binding(SchemaVisitor):
@@ -31,19 +31,19 @@ class Binding(SchemaVisitor):
 
     @property
     def predicate(self):
-        return PRED[self.schema.get('rdfName', self.name)]
+        return self.schema.get('rdfName', self.name)
 
     @property
     def reverse(self):
         name = self.schema.get('rdfReverse')
         if name is not None:
-            return PRED[name]
+            return name
         if self.parent is not None and self.parent.is_array:
             return self.parent.reverse
 
     def get_property(self, predicate):
         for prop in self.properties:
-            if predicate == PRED[prop.name]:
+            if predicate == prop.name:
                 return prop
 
     @property
