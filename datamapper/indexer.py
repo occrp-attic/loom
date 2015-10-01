@@ -53,10 +53,12 @@ class Indexer(object):
         for i in count(0):
             lq = q.offset(i * limit)
             log.info('Getting entity IDs: %s', lq.compile().replace('\n', ' '))
-            for subject, in lq.execute(self.config.graph.graph):
-                yield subject
-            else:
-                return
+            n = 0
+            for subj, in lq.execute(self.config.graph.graph):
+                yield subj
+                n += 1
+            if n == 0:
+                break
 
     def generate_entities(self, schema):
         begin = time()
