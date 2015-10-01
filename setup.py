@@ -42,13 +42,8 @@ setup(
         'normality'
     ],
     entry_points={
-        'datamapper.sinks': [
-            'jsondir = datamapper.sinks.jsondir:JSONDirectorySink',
-            'rdf = datamapper.sinks.rdf:RDFSink',
-            'elastic = datamapper.sinks.elastic:ElasticSink'
-        ],
         'console_scripts': [
-            'datamapper = datamapper.cli:cli'
+            'graphmapper = datamapper.cli:cli'
         ]
     }
 )

@@ -5,7 +5,7 @@ import click
 
 from datamapper.util import DataMapperException
 from datamapper.config import Config
-from datamapper.generator import Generator
+from datamapper.mapper import Mapper
 
 log = logging.getLogger(__name__)
 
@@ -33,17 +33,16 @@ def cli(ctx, debug, db, config):
     ctx.obj['CONFIG'] = Config.from_path(config, database=db)
 
 
-@cli.command('load')
-@click.argument('spec_file', type=click.File('r'))
+@cli.command('map')
+@click.argument('model_file', type=click.File('r'))
 @click.pass_context
-def load(ctx, spec_file):
-    """ Load data from the database into a sink. """
+def map(ctx, model_file):
+    """ Map data from the database into modeled objects. """
     try:
         config = ctx.obj['CONFIG']
-        spec = yaml.load(spec_file)
-        generator = Generator(config, spec)
-        sink = config.sink(config, generator)
-        sink.load()
+        model = yaml.load(model_file)
+        mapper = Mapper(config, model)
+        mapper.map()
     except DataMapperException as dme:
         raise click.ClickException(dme.message)
 

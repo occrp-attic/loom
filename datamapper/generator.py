@@ -15,28 +15,18 @@ class Generator(object):
     """ Apply a mapping specification to generate JSON schema data from a
     SQL database using field mappings. """
 
-    def __init__(self, config, spec):
+    def __init__(self, config, model):
         self.config = config
-        self.spec = spec
-
-    @property
-    def source(self):
-        if not hasattr(self, '_source'):
-            self._source = Source(self.spec.get('source', {}))
-        return self._source
-
-    @property
-    def metadata(self):
-        if not hasattr(self, '_metadata'):
-            self._metadata = MetaData()
-            self._metadata.bind = self.config.engine
-        return self._metadata
+        self.model = model
+        self.metadata = MetaData()
+        self.metadata.bind = self.config.engine
+        self.source = model.get('source', {}).get('slug')
 
     @property
     def tables(self):
         if not hasattr(self, '_tables'):
             self._tables = []
-            for table_obj in self.spec.get('tables', []):
+            for table_obj in self.model.get('tables', []):
                 table_name, table_alias = table_obj, None
                 if isinstance(table_obj, dict):
                     table_name = table_obj.get('table')
@@ -53,7 +43,7 @@ class Generator(object):
     def joins(self):
         if not hasattr(self, '_joins'):
             self._joins = []
-            for join in self.spec.get('joins', {}):
+            for join in self.model.get('joins', {}):
                 for left, right in join.items():
                     self._joins.append((self.get_column(left),
                                         self.get_column(right)))
@@ -115,23 +105,17 @@ class Generator(object):
 
     @property
     def mappings(self):
-        return self.spec.get('mappings', {}).keys()
+        return self.model.get('mappings', {}).keys()
 
-    def generate(self, mapping_name, full_tables=False):
-        """ Generate all the items produced by the given form. """
-        mapping = self.spec.get('mappings', {}).get(mapping_name)
+    def generate(self, mapping_name):
+        """ Generate all the items produced by the given mapping. """
+        mapping = self.model.get('mappings', {}).get(mapping_name)
         if mapping is None:
             raise SpecException("No such mapping: %s", mapping_name)
         self.config.add_schema(mapping['schema'])
 
         columns = set(self.get_column(c) for c in self._scan_columns(mapping))
         tables = set([c.table for c in columns])
-        if full_tables:
-            # NOTE: this is intentionally not just selecting the required
-            # columns in order to return the full table data.
-            for table in tables:
-                for column in table.columns:
-                    columns.add(column)
 
         _columns = []
         for column in columns:
@@ -143,5 +127,4 @@ class Generator(object):
         for raw in self._query(tables, _columns):
             _, entity = mapper.apply(raw)
             # TODO: perform validation here?
-            yield Record(self.source, mapping_name, mapper.bind.path,
-                         entity, raw)
+            yield (mapper.bind.path, entity)

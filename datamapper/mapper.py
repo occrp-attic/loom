@@ -8,7 +8,7 @@ from jsongraph.binding import Binding
 from jsongraph.triplify import triplify
 from jsongraph.vocab import PRED
 
-from datamapper.sinks.base import Sink
+from datamapper.generator import Generator
 from datamapper.util import ConfigException
 
 log = logging.getLogger(__name__)
@@ -18,22 +18,22 @@ class Chunk(object):
     """ A size-limited chunk of data, which is to be written to
     an output file. """
 
-    def __init__(self, config, mapping, record, index=1):
+    def __init__(self, config, mapping, source, index=1):
         self.mapping = mapping
-        self.record = record
+        self.source = source
         self.index = index
         self.config = config
         self.length = 0
 
         # TODO: make this more generic.
         self.source_pred = PRED['sources']
-        self.source_obj = Literal(record.source.slug)
+        self.source_obj = Literal(source)
 
         path = self.config.get('rdf_path')
         if path is None:
             raise ConfigException("No 'rdf_path' is configured.")
         file_name = '%s.%s.nt' % (mapping, index)
-        self.path = os.path.join(path, record.source.slug, file_name)
+        self.path = os.path.join(path, source, file_name)
         try:
             os.makedirs(os.path.dirname(self.path))
         except:
@@ -70,7 +70,7 @@ class Chunk(object):
 
     def next(self):
         self.flush()
-        return Chunk(self.config, self.mapping, self.record,
+        return Chunk(self.config, self.mapping, self.source,
                      index=self.index + 1)
 
     def sparql_submit(self):
@@ -89,22 +89,24 @@ class Chunk(object):
             log.warning("Update error: %s", res.content)
 
 
-class RDFSink(Sink):
-    """ Generate RDF files from the incoming records. """
+class Mapper(object):
+    """ Map generated records to the data model. """
 
-    def load_mapping(self, mapping):
-        chunk = None
+    def __init__(self, config, model):
+        self.config = config
+        self.generator = Generator(config, model)
+
+    def map_mapping(self, mapping):
+        chunk = Chunk(self.config, mapping, self.generator.source)
         schema = None
         begin = time.time()
-        for i, record in enumerate(self.generator.generate(mapping)):
-            if chunk is None:
-                chunk = Chunk(self.config, mapping, record)
-                _, schema = self.config.resolver.resolve(record.schema)
+        for i, (schema_, data) in enumerate(self.generator.generate(mapping)):
+            if schema is None:
+                _, schema = self.config.resolver.resolve(schema_)
 
             if chunk.full:
                 chunk = chunk.next()
 
-            data = record.entity
             binding = Binding(schema, self.config.resolver, data=data)
             _, triples = triplify(binding)
             chunk.write(triples)
@@ -117,6 +119,6 @@ class RDFSink(Sink):
                          mapping, i, speed)
         chunk.flush()
 
-    def load(self):
+    def map(self):
         for mapping in self.generator.mappings:
-            self.load_mapping(mapping)
+            self.map_mapping(mapping)
