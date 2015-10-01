@@ -6,6 +6,7 @@ import click
 from datamapper.util import DataMapperException
 from datamapper.config import Config
 from datamapper.mapper import Mapper
+from datamapper.indexer import Indexer
 
 log = logging.getLogger(__name__)
 
@@ -46,6 +47,19 @@ def map(ctx, model_file):
     except DataMapperException as dme:
         raise click.ClickException(dme.message)
 
+
+@cli.command('index')
+@click.argument('model_file', type=click.File('r'))
+@click.pass_context
+def index(ctx, model_file):
+    """ Index modeled objects to ElasticSearch. """
+    try:
+        config = ctx.obj['CONFIG']
+        model = yaml.load(model_file)
+        indexer = Indexer(config, model)
+        indexer.index()
+    except DataMapperException as dme:
+        raise click.ClickException(dme.message)
 
 if __name__ == '__main__':
     cli(obj={})

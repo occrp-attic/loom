@@ -62,18 +62,18 @@ class Chunk(object):
 
     @property
     def full(self):
-        return self.length > 30 * 1024 * 1024
+        return self.length > 30 * 1024
 
     def flush(self):
         self.fh.close()
-        self.sparql_submit()
+        self.upload()
 
     def next(self):
         self.flush()
         return Chunk(self.config, self.mapping, self.source,
                      index=self.index + 1)
 
-    def sparql_submit(self):
+    def upload(self):
         endpoint = self.config.get('rdf_endpoint')
         if endpoint is None:
             log.info("No 'rdf_endpoint', not uploading %r.", self.path)
@@ -94,6 +94,8 @@ class Mapper(object):
 
     def __init__(self, config, model):
         self.config = config
+        endpoint = self.config.graph.store.update_endpoint
+        self.config['rdf_endpoint'] = endpoint
         self.generator = Generator(config, model)
 
     def map_mapping(self, mapping):

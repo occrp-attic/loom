@@ -5,8 +5,6 @@ from sqlalchemy.sql.expression import select
 from jsonmapping import Mapper
 
 from datamapper.util import SpecException
-from datamapper.source import Source
-from datamapper.record import Record
 
 log = logging.getLogger(__name__)
 

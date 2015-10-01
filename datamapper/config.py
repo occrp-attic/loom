@@ -6,9 +6,9 @@ import urlparse
 from normality import slugify
 from sqlalchemy import create_engine
 from jsonschema import RefResolver
+from jsongraph import Graph
 
 from datamapper.util import ConfigException, EnvMapping
-from datamapper.sinks import Sink
 
 log = logging.getLogger(__name__)
 
@@ -52,6 +52,17 @@ class Config(EnvMapping):
         return self.get('schemas') or {}
 
     @property
+    def graph(self):
+        if not hasattr(self, '_graph'):
+            self._graph = Graph(base_uri=self.base_uri,
+                                resolver=self.resolver,
+                                config=self)
+            for alias, uri in self.schemas.items():
+                self._graph.register(alias, uri)
+            log.debug("Graph: %r", self._graph)
+        return self._graph
+
+    @property
     def resolver(self):
         if not hasattr(self, '_resolver'):
             self._resolver = RefResolver(self.base_uri, self.base_uri)
@@ -76,10 +87,3 @@ class Config(EnvMapping):
             raise ConfigException("Cannot determine alias for: %r" % schema)
         self['schemas'][name] = schema
         return name
-
-    @property
-    def sink(self):
-        cls = Sink.by_name(self.get('sink'))
-        if cls is None:
-            raise ConfigException("No such sink type: %r" % self.get('sink'))
-        return cls
