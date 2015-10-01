@@ -3,10 +3,10 @@ import logging
 import requests
 
 from rdflib import Literal
-from jsongraph.binding import Binding
-from jsongraph.triplify import triplify
+
 from jsongraph.vocab import PRED
 
+from datamapper.model import Binding, triplify
 from datamapper.generator import Generator
 from datamapper.util import ConfigException
 
@@ -71,20 +71,22 @@ class Mapper(object):
         self.config['rdf_endpoint'] = endpoint
         self.generator = Generator(config, model)
 
-    def map_mapping(self, mapping):
-        chunk = Chunk(self.config, mapping, self.generator.source)
+    def records(self, mapping):
         schema = None
         begin = time.time()
         for i, (schema_, data) in enumerate(self.generator.generate(mapping)):
             if schema is None:
                 _, schema = self.config.resolver.resolve(schema_)
 
-            if chunk.full:
-                chunk.flush()
-
             binding = Binding(schema, self.config.resolver, data=data)
             _, triples = triplify(binding)
-            chunk.write(triples)
+            for triple in triples:
+                yield {
+                    'subject': triple[0],
+                    'predicate': triple[1],
+                    'object': triple[2].n3(),
+                    'source': self.generator.source,
+                }
 
             if i > 0 and i % 10000 == 0:
                 elapsed = time.time() - begin
@@ -92,8 +94,11 @@ class Mapper(object):
                 speed = per_record * 1000
                 log.info("Generating %r: %s records (%.2fms/r)",
                          mapping, i, speed)
-        chunk.flush()
+
+    def map_mapping(self, mapping):
+        self.config.statement.load_iter(self.records(mapping))
 
     def map(self):
+        # TODO: delete all table contents.
         for mapping in self.generator.mappings:
             self.map_mapping(mapping)

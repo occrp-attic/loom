@@ -8,6 +8,7 @@ from sqlalchemy import create_engine
 from jsonschema import RefResolver
 from jsongraph import Graph
 
+from datamapper.db import StatementTable
 from datamapper.util import ConfigException, EnvMapping
 
 log = logging.getLogger(__name__)
@@ -38,6 +39,14 @@ class Config(EnvMapping):
             log.debug("Database: %r", database)
             self._engine = create_engine(database)
         return self._engine
+
+    @property
+    def statement(self):
+        if not hasattr(self, '_statement'):
+            self._statement = StatementTable(self.engine)
+            if not self._statement.exists:
+                self._statement.create()
+        return self._statement
 
     @property
     def base_uri(self):

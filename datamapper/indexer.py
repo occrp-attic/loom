@@ -4,7 +4,6 @@ from itertools import count
 # from datetime import datetime
 from pprint import pprint  # noqa
 
-from jsongraph import Graph
 from sparqlquery import Select, v, asc
 from rdflib import RDF, URIRef
 from elasticsearch import Elasticsearch
@@ -22,7 +21,6 @@ class Indexer(object):
     def __init__(self, config, model):
         self.chunk = int(config.get('chunk') or 1000)
         self.config = config
-        self.graph = Graph(config=config, resolver=config.resolver)
 
     @property
     def client(self):
