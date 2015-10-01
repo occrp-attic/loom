@@ -18,27 +18,19 @@ class Chunk(object):
     """ A size-limited chunk of data, which is to be written to
     an output file. """
 
-    def __init__(self, config, mapping, source, index=1):
+    def __init__(self, config, mapping, source):
         self.mapping = mapping
-        self.source = source
-        self.index = index
         self.config = config
-        self.length = 0
+        self.cache = []
 
         # TODO: make this more generic.
         self.source_pred = PRED['sources']
         self.source_obj = Literal(source)
 
-        path = self.config.get('rdf_path')
-        if path is None:
-            raise ConfigException("No 'rdf_path' is configured.")
-        file_name = '%s.%s.nt' % (mapping, index)
-        self.path = os.path.join(path, source, file_name)
-        try:
-            os.makedirs(os.path.dirname(self.path))
-        except:
-            pass
-        self.fh = open(self.path, 'w')
+        store = config.get('store')
+        self.endpoint = store.get('data') or store.get('update')
+        if self.endpoint is None:
+            raise ConfigException("No store URL configured!")
 
     def add_sources(self, triples):
         """ This is slightly hacky: I want all subjects to have provenance
@@ -53,40 +45,22 @@ class Chunk(object):
         return triples
 
     def write(self, triples):
-        output = []
         for t in self.add_sources(triples):
-            output.extend((t[0].n3(), t[1].n3(), t[2].n3(), '.\n'))
-        text = ' '.join(output).encode('utf-8')
-        self.length += len(text)
-        self.fh.write(text)
+            self.cache.extend((t[0].n3(), t[1].n3(), t[2].n3(), '.'))
 
     @property
     def full(self):
-        return self.length > 30 * 1024
+        return len(self.cache) > 4 * 10000
 
     def flush(self):
-        self.fh.close()
-        self.upload()
-
-    def next(self):
-        self.flush()
-        return Chunk(self.config, self.mapping, self.source,
-                     index=self.index + 1)
-
-    def upload(self):
-        endpoint = self.config.get('rdf_endpoint')
-        if endpoint is None:
-            log.info("No 'rdf_endpoint', not uploading %r.", self.path)
-            return
-
-        log.info("Uploading data chunk %r to: %r.", self.path, endpoint)
+        log.info("Uploading data to: %r.", self.endpoint)
         # headers = {'Content-Type': 'application/sparql-update'}
         headers = {'Content-Type': 'text/turtle'}
-        with open(self.path, 'r') as fh:
-            data = fh.read()
-        res = requests.post(endpoint, data=data, headers=headers)
+        data = ' '.join(self.cache).encode('utf-8')
+        res = requests.post(self.endpoint, data=data, headers=headers)
         if res.status_code > 300:
             log.warning("Update error: %s", res.content)
+        self.cache = []
 
 
 class Mapper(object):
@@ -107,7 +81,7 @@ class Mapper(object):
                 _, schema = self.config.resolver.resolve(schema_)
 
             if chunk.full:
-                chunk = chunk.next()
+                chunk.flush()
 
             binding = Binding(schema, self.config.resolver, data=data)
             _, triples = triplify(binding)
