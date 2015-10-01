@@ -7,22 +7,22 @@ from normality import slugify
 from sqlalchemy import create_engine
 from jsonschema import RefResolver
 
-from datamapper.util import ConfigException
+from datamapper.util import ConfigException, EnvMapping
 from datamapper.sinks import Sink
 
 log = logging.getLogger(__name__)
 
 
-class Config(dict):
+class Config(EnvMapping):
     """ Parsing a configuration file. This specifies the database connection
     and the settings for each data sink. """
 
     def __init__(self, data, path=None, database=None):
-        self.update(data)
+        if 'schemas' not in data:
+            data['schemas'] = {}
+        self.data = data
         self.path = path
         self.database = database
-        if 'schemas' not in self:
-            self['schemas'] = {}
 
     @classmethod
     def from_path(cls, path, **kwargs):
@@ -45,11 +45,11 @@ class Config(dict):
             config_uri = 'file:///tmp'
         else:
             config_uri = 'file://' + os.path.abspath(self.path)
-        return self.get('base_uri', config_uri)
+        return self.get('base_uri') or config_uri
 
     @property
     def schemas(self):
-        return self.get('schemas', {})
+        return self.get('schemas') or {}
 
     @property
     def resolver(self):

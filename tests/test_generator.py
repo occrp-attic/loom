@@ -54,6 +54,11 @@ class GeneratorTestCase(TestCase):
         again = self.config.get_alias('http://occrp.org/foo/bar.json#xxx')
         assert again == alias, again
 
+    def test_expand_envvars(self):
+        config = Config({'foo': '$PATH'})
+        assert '$PATH' not in config.get('foo'), config.get('foo')
+        assert len(config.get('foo')), config.get('foo')
+
     @raises(ConfigException)
     def test_invalid_alias(self):
         self.config.get_alias('http://occrp.org/foo/bar.json#xxx')

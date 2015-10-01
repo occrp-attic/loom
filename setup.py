@@ -31,7 +31,8 @@ setup(
         'sqlalchemy',
         'elasticsearch',
         'pyyaml',
-        'click'
+        'click',
+        'six'
     ],
     tests_require=[
         'nose',
