@@ -1,8 +1,9 @@
 
-def objectify(load, node, binding, depth, path):
-    """ Given an RDF node URI (and it's associated schema), return an
-    object from the ``graph`` that represents the information available
-    about this node. """
+def objectify(load, node, binding, depth, path=None):
+    """ Given a node ID (and it's associated schema), return an
+    object the information available about this node. """
+    if path is None:
+        path = set()
     if binding.is_object:
         obj = {'$schema': binding.path}
         for (s, p, o) in load(node):

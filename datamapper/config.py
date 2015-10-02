@@ -54,11 +54,11 @@ class Config(EnvMapping):
             config_uri = 'file:///tmp'
         else:
             config_uri = 'file://' + os.path.abspath(self.path)
-        return self.get('base_uri') or config_uri
+        return self.get('base_uri', config_uri)
 
     @property
     def schemas(self):
-        return self.get('schemas') or {}
+        return self.get('schemas', {})
 
     @property
     def graph(self):

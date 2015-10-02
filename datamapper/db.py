@@ -32,6 +32,8 @@ class StatementTable(object):
             self._table.append_column(col)
             col = Column('object', Unicode())
             self._table.append_column(col)
+            col = Column('type', Unicode(32))
+            self._table.append_column(col)
             col = Column('source', Unicode(255))
             self._table.append_column(col)
             col = Column('timestamp', DateTime)

@@ -1,44 +1,43 @@
+import typecast
 from rdflib import RDF
+
+TYPE_TYPE = 'type'
+TYPE_LINK = 'link'
 
 
 def triplify_object(binding):
     """ Create bi-directional bindings for object relationships. """
-    triples = []
-    if binding.uri:
-        triples.append((binding.subject, RDF.type, binding.uri))
+    if binding.path:
+        yield (binding.subject, RDF.type, binding.path, TYPE_TYPE)
 
     if binding.parent is not None:
         parent = binding.parent.subject
         if binding.parent.is_array:
             parent = binding.parent.parent.subject
-        triples.append((parent, binding.predicate, binding.subject))
+        yield (parent, binding.predicate, binding.subject, TYPE_LINK)
         if binding.reverse is not None:
-            triples.append((binding.subject, binding.reverse, parent))
+            yield (binding.subject, binding.reverse, parent, TYPE_LINK)
 
     for prop in binding.properties:
-        _, prop_triples = triplify(prop)
-        triples.extend(prop_triples)
-
-    return binding.subject, triples
+        for res in triplify(prop):
+            yield res
 
 
 def triplify(binding):
-    """ Recursively generate RDF statement triples from the data and
-    schema supplied to the application. """
-    triples = []
+    """ Recursively generate statements from the data and schema supplied. """
     if binding.data is None:
-        return None, triples
+        return
 
     if binding.is_object:
-        return triplify_object(binding)
+        for res in triplify_object(binding):
+            yield res
     elif binding.is_array:
         for item in binding.items:
-            _, item_triples = triplify(item)
-            triples.extend(item_triples)
-        return None, triples
+            for res in triplify(item):
+                yield res
     else:
+        # TODO: figure out if I ever want to check for reverse here.
         subject = binding.parent.subject
-        triples.append((subject, binding.predicate, binding.object))
-        if binding.reverse is not None:
-            triples.append((binding.object, binding.reverse, subject))
-        return subject, triples
+        type_name = typecast.name(binding.data)
+        obj = typecast.stringify(type_name, binding.data)
+        yield (subject, binding.predicate, obj, type_name)

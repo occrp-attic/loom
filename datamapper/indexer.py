@@ -57,7 +57,7 @@ class Indexer(object):
         table = self.config.statement.table
         q = select([table.c.subject])
         q = q.where(table.c.predicate == RDF.type)
-        q = q.where(table.c.object == URIRef(schema).n3())
+        q = q.where(table.c.object == schema)
         log.info('Getting entity IDs: %s', q)
         for row in generate_results(self.config.engine, q):
             yield row.get('subject')

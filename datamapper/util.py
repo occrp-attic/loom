@@ -1,7 +1,10 @@
 import six
 import os
-from hashlib import sha1
+import string
+from uuid import uuid4
 from collections import MutableMapping, Mapping
+
+ALPHABET = string.letters + string.digits
 
 
 class DataMapperException(Exception):
@@ -29,6 +32,14 @@ class EnvMapping(MutableMapping):
             return os.path.expandvars(value)
         return value
 
+    def get(self, name, default=None):
+        value = self.data.get(name)
+        if value is None:
+            return default
+        if isinstance(value, six.string_types) and not len(value.strip()):
+            return default
+        return value
+
     def __setitem__(self, key, value):
         self.data[key] = value
 
@@ -43,3 +54,12 @@ class EnvMapping(MutableMapping):
 
     def __len__(self):
         return len(self.data)
+
+
+def make_id():
+    uuid = uuid4().int
+    chars = [u'urn:']
+    while uuid:
+        uuid, digit = divmod(uuid, len(ALPHABET))
+        chars.append(ALPHABET[digit])
+    return u''.join(chars)

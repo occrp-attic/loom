@@ -22,12 +22,12 @@ class Mapper(object):
                 _, schema = self.config.resolver.resolve(schema_)
 
             binding = Binding(schema, self.config.resolver, data=data)
-            _, triples = triplify(binding)
-            for triple in triples:
+            for (s, p, o, t) in triplify(binding):
                 yield {
-                    'subject': triple[0].n3(),
-                    'predicate': triple[1],
-                    'object': triple[2].n3(),
+                    'subject': s,
+                    'predicate': p,
+                    'object': o,
+                    'type': t,
                     'source': self.generator.source,
                 }
 

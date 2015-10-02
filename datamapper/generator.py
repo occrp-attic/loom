@@ -18,7 +18,7 @@ class Generator(object):
         self.model = model
         self.metadata = MetaData()
         self.metadata.bind = self.config.engine
-        self.source = model.get('source', {}).get('slug')
+        self.source = unicode(model.get('source', {}).get('slug'))
 
     @property
     def tables(self):
