@@ -9,7 +9,7 @@ from elasticsearch.helpers import bulk
 
 from datamapper.util import ConfigException
 from datamapper.elastic import generate_mapping
-from datamapper.model import Binding, objectify, TYPE_TYPE
+from datamapper.model import Binding, objectify
 
 log = logging.getLogger(__name__)
 
@@ -51,16 +51,15 @@ class Indexer(object):
     def generate_subjects(self, schema):
         """ Iterate over all entity IDs which match the current set of
         constraints (i.e. a specific schema or source dataset). """
-        table = self.config.statement.table
+        table = self.config.entities.table
         q = select([table.c.subject])
-        q = q.where(table.c.predicate == TYPE_TYPE)
-        q = q.where(table.c.object == schema)
+        q = q.where(table.c.schema == schema)
         log.info('Getting entity IDs: %s', q)
         for row in generate_results(self.config.engine, q):
             yield row.get('subject')
 
-    def load_statements(self, subject):
-        table = self.config.statement.table
+    def load_properties(self, subject):
+        table = self.config.properties.table
         q = select([table.c.predicate, table.c.object])
         q = q.where(table.c.subject == subject)
         for row in generate_results(self.config.engine, q):
@@ -71,7 +70,7 @@ class Indexer(object):
         _, schema = self.config.resolver.resolve(schema_uri)
         binding = Binding(schema, self.config.resolver)
         for i, subject in enumerate(self.generate_subjects(schema=schema_uri)):
-            entity = objectify(self.load_statements, subject, binding, 3,
+            entity = objectify(self.load_properties, subject, binding, 3,
                                set())
             yield {
                 '_id': entity.get('id'),

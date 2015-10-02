@@ -5,9 +5,10 @@ import urlparse
 
 from normality import slugify
 from sqlalchemy import create_engine
+from sqlalchemy.schema import MetaData
 from jsonschema import RefResolver
 
-from datamapper.db import StatementTable
+from datamapper.db import get_entities_manager, get_properties_manager
 from datamapper.util import ConfigException, EnvMapping
 
 log = logging.getLogger(__name__)
@@ -17,12 +18,11 @@ class Config(EnvMapping):
     """ Parsing a configuration file. This specifies the database connection
     and the settings for each data sink. """
 
-    def __init__(self, data, path=None, database=None):
-        if 'schemas' not in data:
-            data['schemas'] = {}
-        self.data = data
-        self.path = path
-        self.database = database
+    def __init__(self, data, path=None, database_uri=None):
+        self.path = path or os.getcwd()
+        self.database_uri = database_uri
+        data['schemas'] = data.get('schemas', {})
+        super(Config, self).__init__(data)
 
     @classmethod
     def from_path(cls, path, **kwargs):
@@ -32,28 +32,36 @@ class Config(EnvMapping):
     @property
     def engine(self):
         if not hasattr(self, '_engine'):
-            database = self.database or self.get('database')
-            if database is None:
+            database_uri = self.database_uri or self.get('database')
+            if database_uri is None:
                 raise ConfigException("No database URI configued!")
-            log.debug("Database: %r", database)
-            self._engine = create_engine(database)
+            log.debug("Database: %r", database_uri)
+            self._engine = create_engine(database_uri)
         return self._engine
 
     @property
-    def statement(self):
-        if not hasattr(self, '_statement'):
-            self._statement = StatementTable(self.engine)
-            if not self._statement.exists:
-                self._statement.create()
-        return self._statement
+    def metadata(self):
+        if not hasattr(self, '_metadata'):
+            self._metadata = MetaData()
+            self._metadata.bind = self.engine
+        return self._metadata
+
+    @property
+    def entities(self):
+        if not hasattr(self, '_entities'):
+            self._entities = get_entities_manager(self.metadata)
+        return self._entities
+
+    @property
+    def properties(self):
+        if not hasattr(self, '_properties'):
+            self._properties = get_properties_manager(self.metadata)
+        return self._properties
 
     @property
     def base_uri(self):
-        if self.path is None:
-            config_uri = 'file:///tmp'
-        else:
-            config_uri = 'file://' + os.path.abspath(self.path)
-        return self.get('base_uri', config_uri)
+        uri = 'file://' + os.path.abspath(self.path)
+        return self.get('base_uri', uri)
 
     @property
     def schemas(self):

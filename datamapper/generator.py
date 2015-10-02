@@ -1,6 +1,6 @@
 import logging
 
-from sqlalchemy.schema import MetaData, Table
+from sqlalchemy.schema import Table
 from sqlalchemy.sql.expression import select
 from jsonmapping import Mapper
 
@@ -16,8 +16,6 @@ class Generator(object):
     def __init__(self, config, model):
         self.config = config
         self.model = model
-        self.metadata = MetaData()
-        self.metadata.bind = self.config.engine
         self.source = unicode(model.get('source', {}).get('slug'))
 
     @property
@@ -30,7 +28,7 @@ class Generator(object):
                     table_name = table_obj.get('table')
                     table_alias = table_obj.get('alias')
 
-                table = Table(table_name, self.metadata, autoload=True)
+                table = Table(table_name, self.config.metadata, autoload=True)
                 if table_alias is not None:
                     table = table.alias(table_alias)
 

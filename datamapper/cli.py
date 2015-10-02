@@ -31,7 +31,7 @@ def cli(ctx, debug, db, config):
     logging.getLogger('urllib3').setLevel(logging.WARNING)
     logging.getLogger('elasticsearch').setLevel(logging.WARNING)
 
-    ctx.obj['CONFIG'] = Config.from_path(config, database=db)
+    ctx.obj['CONFIG'] = Config.from_path(config, database_uri=db)
 
 
 @cli.command('map')
