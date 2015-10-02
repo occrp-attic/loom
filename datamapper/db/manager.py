@@ -51,6 +51,11 @@ class TableManager(object):
     def writer(self, conn):
         return Writer(self, conn)
 
+    def delete_source(self, conn, source):
+        q = self.table.delete()
+        q = q.where(self.table.c.source == source)
+        conn.execute(q)
+
     def drop(self):
         """ Drop the table if it does exist. """
         if self.exists:

@@ -33,46 +33,40 @@ class Mapper(object):
                 log.info("Generating %r: %s records (%.2fms/r)",
                          mapping, i, speed)
 
-    def map_mapping(self, mapping, chunk_size=10000):
+    def map_mapping(self, conn, mapping):
         """ Bulk load data to the appropriate tables. """
         ts = datetime.utcnow()
-        conn = self.config.engine.connect()
         entities = self.config.entities.writer(conn)
         properties = self.config.properties.writer(conn)
+        for i, (s, p, o, t) in enumerate(self.records(mapping)):
+            if p == TYPE_TYPE:
+                entities.write({
+                    'subject': s,
+                    'schema': o,
+                    'source': self.generator.source,
+                    'timestamp': ts
+                })
+            else:
+                properties.write({
+                    'subject': s,
+                    'predicate': p,
+                    'object': o,
+                    'type': t,
+                    'source': self.generator.source,
+                    'timestamp': ts
+                })
+        properties.flush()
+        entities.flush()
+
+    def map(self):
+        conn = self.config.engine.connect()
         tx = conn.begin()
         try:
-            for i, (s, p, o, t) in enumerate(self.records(mapping)):
-                if p == TYPE_TYPE:
-                    entities.write({
-                        'subject': s,
-                        'schema': o,
-                        'source': self.generator.source,
-                        'timestamp': ts
-                    })
-                else:
-                    properties.write({
-                        'subject': s,
-                        'predicate': p,
-                        'object': o,
-                        'type': t,
-                        'source': self.generator.source,
-                        'timestamp': ts
-                    })
-
-                # flush transaction periodically.
-                # not sure this is a good idea.
-                if i > 0 and i % 1000000 == 0:
-                    tx.commit()
-                    tx = conn.begin()
-
-            properties.flush()
-            entities.flush()
+            self.config.entities.delete_source(conn, self.generator.source)
+            self.config.properties.delete_source(conn, self.generator.source)
+            for mapping in self.generator.mappings:
+                self.map_mapping(conn, mapping)
             tx.commit()
         except:
             tx.rollback()
             raise
-
-    def map(self):
-        # TODO: delete all table contents.
-        for mapping in self.generator.mappings:
-            self.map_mapping(mapping)

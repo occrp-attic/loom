@@ -65,6 +65,7 @@ class Indexer(object):
         q = select([table.c.predicate, table.c.object, table.c.source])
         q = q.where(table.c.subject == subject)
         for row in generate_results(self.config.engine, q):
+            # TODO: do we need type casting here?
             yield row.get('predicate'), row.get('object'), row.get('source')
 
     def generate_entities(self, schema_uri):
