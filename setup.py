@@ -14,7 +14,7 @@ setup(
         'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7'
     ],
-    keywords='schema jsonschema json data sql',
+    keywords='schema jsonschema json data sql etl loader elasticsearch',
     author='OCCRP',
     author_email='tech@occrp.org',
     url='http://github.com/occrp/loom',
@@ -42,7 +42,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'graphmapper = loom.cli:cli'
+            'loom = loom.cli:cli'
         ]
     }
 )

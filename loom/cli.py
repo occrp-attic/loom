@@ -3,7 +3,7 @@ import logging
 import yaml
 import click
 
-from loom.util import loomException
+from loom.util import LoomException
 from loom.config import Config
 from loom.mapper import Mapper
 from loom.indexer import Indexer
@@ -44,8 +44,8 @@ def map(ctx, model_file):
         model = yaml.load(model_file)
         mapper = Mapper(config, model)
         mapper.map()
-    except loomException as dme:
-        raise click.ClickException(dme.message)
+    except LoomException as le:
+        raise click.ClickException(le.message)
 
 
 @cli.command('index')

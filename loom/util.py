@@ -7,15 +7,15 @@ from collections import MutableMapping, Mapping
 ALPHABET = string.letters + string.digits
 
 
-class loomException(Exception):
+class LoomException(Exception):
     pass
 
 
-class SpecException(loomException):
+class SpecException(LoomException):
     pass
 
 
-class ConfigException(loomException):
+class ConfigException(LoomException):
     pass
 
 
