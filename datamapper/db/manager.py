@@ -10,12 +10,13 @@ log = logging.getLogger(__name__)
 class TableManager(object):
     """ The table manager manages writing and reading data from SQL tables. """
 
-    def __init__(self, meta, name, columns, indexes):
+    def __init__(self, meta, name, columns, indexes, unique):
         self.bind = meta.bind
         self.meta = meta
         self.name = name
         self.columns = columns
         self.indexes = indexes
+        self.unique = unique
 
     @property
     def table(self):
@@ -55,6 +56,21 @@ class TableManager(object):
         q = self.table.delete()
         q = q.where(self.table.c.source == source)
         conn.execute(q)
+
+    def clean(self, conn):
+        args = {
+            'name': self.name,
+            'unique': ', '.join(self.unique)
+        }
+        log.info("Cleaning and optimizing table: %r", self.name)
+        dedupe_q = """
+            DELETE FROM %(name)s WHERE id IN (SELECT id
+                FROM (SELECT id, ROW_NUMBER() OVER (partition BY %(unique)s
+                ORDER BY id) AS rnum FROM %(name)s) t
+                WHERE t.rnum > 1);
+        """
+        conn.execute(dedupe_q % args)
+        # conn.execute("VACUUM FULL %(name)s;" % args)
 
     def drop(self):
         """ Drop the table if it does exist. """

@@ -64,9 +64,13 @@ class Mapper(object):
         try:
             self.config.entities.delete_source(conn, self.generator.source)
             self.config.properties.delete_source(conn, self.generator.source)
+
             for mapping in self.generator.mappings:
                 self.map_mapping(conn, mapping)
             tx.commit()
+
+            self.config.entities.clean(conn)
+            self.config.properties.clean(conn)
         except:
             tx.rollback()
             raise
