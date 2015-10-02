@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 
 setup(
-    name='datamapper',
+    name='loom',
     version='0.1',
     description="Map database queries to JSON schema objects.",
     long_description="",
@@ -17,7 +17,7 @@ setup(
     keywords='schema jsonschema json data sql',
     author='OCCRP',
     author_email='tech@occrp.org',
-    url='http://github.com/occrp/datamapper',
+    url='http://github.com/occrp/loom',
     license='AGPLv3',
     packages=find_packages(exclude=['ez_setup', 'examples', 'test']),
     namespace_packages=[],
@@ -42,7 +42,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'graphmapper = datamapper.cli:cli'
+            'graphmapper = loom.cli:cli'
         ]
     }
 )

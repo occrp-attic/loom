@@ -2,7 +2,7 @@ import logging
 
 from sqlalchemy.schema import Table, Index
 
-from datamapper.db.writer import Writer
+from loom.db.writer import Writer
 
 log = logging.getLogger(__name__)
 

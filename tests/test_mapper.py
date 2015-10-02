@@ -5,9 +5,9 @@ from unittest import TestCase
 
 from util import create_fixtures, FIXTURE_PATH
 
-from datamapper.config import Config
-from datamapper.mapper import Mapper
-from datamapper.generator import SpecException
+from loom.config import Config
+from loom.mapper import Mapper
+from loom.generator import SpecException
 
 
 class MapperTestCase(TestCase):

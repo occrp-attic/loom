@@ -1,6 +1,6 @@
 from jsonmapping import SchemaVisitor
 
-from datamapper.util import make_id
+from loom.util import make_id
 
 
 class Binding(SchemaVisitor):

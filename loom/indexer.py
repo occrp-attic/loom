@@ -7,9 +7,9 @@ from sqlalchemy.sql.expression import select
 from elasticsearch import Elasticsearch
 from elasticsearch.helpers import bulk
 
-from datamapper.util import ConfigException
-from datamapper.elastic import generate_mapping
-from datamapper.model import Binding, objectify
+from loom.util import ConfigException
+from loom.elastic import generate_mapping
+from loom.model import Binding, objectify
 
 log = logging.getLogger(__name__)
 

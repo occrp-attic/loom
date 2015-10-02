@@ -5,8 +5,8 @@ from unittest import TestCase
 
 from util import create_fixtures, FIXTURE_PATH
 
-from datamapper.config import Config, ConfigException
-from datamapper.generator import Generator, SpecException
+from loom.config import Config, ConfigException
+from loom.generator import Generator
 
 
 class ConfigTestCase(TestCase):

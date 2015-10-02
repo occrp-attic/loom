@@ -8,8 +8,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.schema import MetaData
 from jsonschema import RefResolver
 
-from datamapper.db import get_entities_manager, get_properties_manager
-from datamapper.util import ConfigException, EnvMapping
+from loom.db import get_entities_manager, get_properties_manager
+from loom.util import ConfigException, EnvMapping
 
 log = logging.getLogger(__name__)
 

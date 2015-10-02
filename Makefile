@@ -1,6 +1,6 @@
 
 test: install
-	@pyenv/bin/nosetests --with-coverage --cover-package=datamapper --cover-erase
+	@pyenv/bin/nosetests --with-coverage --cover-package=loom --cover-erase
 
 install: pyenv/bin/python
 

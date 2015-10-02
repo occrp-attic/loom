@@ -2,8 +2,8 @@ import time
 import logging
 from datetime import datetime
 
-from datamapper.model import Binding, triplify, TYPE_TYPE
-from datamapper.generator import Generator
+from loom.model import Binding, triplify, TYPE_TYPE
+from loom.generator import Generator
 
 log = logging.getLogger(__name__)
 

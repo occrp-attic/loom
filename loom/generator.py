@@ -4,7 +4,7 @@ from sqlalchemy.schema import Table
 from sqlalchemy.sql.expression import select
 from jsonmapping import Mapper
 
-from datamapper.util import SpecException
+from loom.util import SpecException
 
 log = logging.getLogger(__name__)
 

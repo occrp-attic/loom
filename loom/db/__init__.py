@@ -1,7 +1,7 @@
 from sqlalchemy.schema import Column
 from sqlalchemy.types import Unicode, BigInteger, DateTime
 
-from datamapper.db.manager import TableManager
+from loom.db.manager import TableManager
 
 
 def get_properties_manager(meta):

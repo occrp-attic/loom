@@ -1,7 +1,7 @@
-# OCCRP DataMapper
+# Loom
 
 As part of a structured data processing pipeline, this library helps to generate
-structured JSON from a set of SQL database tables.
+a statement-based graph model from a set of SQL database tables.
 
 The goal is to map a set of automatically generated SQL queries to JSON objects.
 These JSON objects will be instances of various types defined by JSON schema.

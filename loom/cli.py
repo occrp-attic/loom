@@ -3,10 +3,10 @@ import logging
 import yaml
 import click
 
-from datamapper.util import DataMapperException
-from datamapper.config import Config
-from datamapper.mapper import Mapper
-from datamapper.indexer import Indexer
+from loom.util import loomException
+from loom.config import Config
+from loom.mapper import Mapper
+from loom.indexer import Indexer
 
 log = logging.getLogger(__name__)
 
@@ -44,7 +44,7 @@ def map(ctx, model_file):
         model = yaml.load(model_file)
         mapper = Mapper(config, model)
         mapper.map()
-    except DataMapperException as dme:
+    except loomException as dme:
         raise click.ClickException(dme.message)
 
 
@@ -58,7 +58,7 @@ def index(ctx, model_file):
         model = yaml.load(model_file)
         indexer = Indexer(config, model)
         indexer.index()
-    except DataMapperException as dme:
+    except loomException as dme:
         raise click.ClickException(dme.message)
 
 if __name__ == '__main__':
