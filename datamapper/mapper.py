@@ -37,23 +37,20 @@ class Mapper(object):
         """ Bulk load data to the appropriate tables. """
         ts = datetime.utcnow()
         conn = self.config.engine.connect()
+        entities = self.config.entities.writer(conn)
+        properties = self.config.properties.writer(conn)
         tx = conn.begin()
-        properties = []
-        entities = []
         try:
             for i, (s, p, o, t) in enumerate(self.records(mapping)):
                 if p == TYPE_TYPE:
-                    entities.append({
+                    entities.write({
                         'subject': s,
                         'schema': o,
                         'source': self.generator.source,
                         'timestamp': ts
                     })
-                    if len(entities) >= chunk_size:
-                        self.config.entities.insert_bulk(conn, entities)
-                        entities = []
                 else:
-                    properties.append({
+                    properties.write({
                         'subject': s,
                         'predicate': p,
                         'object': o,
@@ -61,9 +58,6 @@ class Mapper(object):
                         'source': self.generator.source,
                         'timestamp': ts
                     })
-                    if len(properties) >= chunk_size:
-                        self.config.properties.insert_bulk(conn, properties)
-                        properties = []
 
                 # flush transaction periodically.
                 # not sure this is a good idea.
@@ -71,10 +65,8 @@ class Mapper(object):
                     tx.commit()
                     tx = conn.begin()
 
-            if len(properties):
-                self.config.properties.insert_bulk(conn, properties)
-            if len(entities):
-                self.config.entities.insert_bulk(conn, entities)
+            properties.flush()
+            entities.flush()
             tx.commit()
         except:
             tx.rollback()

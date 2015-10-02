@@ -2,6 +2,8 @@ import logging
 
 from sqlalchemy.schema import Table, Index
 
+from datamapper.db.writer import Writer
+
 log = logging.getLogger(__name__)
 
 
@@ -46,10 +48,8 @@ class TableManager(object):
     def exists(self):
         return self.bind.has_table(self.table.name)
 
-    def insert_bulk(self, conn, rows):
-        """ Bulk load data from an iterator to this table. """
-        stmt = self.table.insert()
-        conn.execute(stmt, rows)
+    def writer(self, conn):
+        return Writer(self, conn)
 
     def drop(self):
         """ Drop the table if it does exist. """
