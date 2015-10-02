@@ -5,6 +5,8 @@ BASE_MAPPING = {
     "_id": {"path": "id"},
     "_all": {"enabled": True},
     "properties": {
+        "$schema": {"type": "string", "index": "not_analyzed"},
+        "$sources": {"type": "string", "index": "not_analyzed"},
         "_updated_at": {"type": "date", "index": "not_analyzed"},
         "_indexed_at": {"type": "date", "index": "not_analyzed"}
     }
