@@ -1,6 +1,6 @@
 import logging
 
-from sqlalchemy.schema import Table
+from sqlalchemy.schema import Table, Index
 
 log = logging.getLogger(__name__)
 
@@ -13,36 +13,43 @@ class TableManager(object):
         self.meta = meta
         self.name = name
         self.columns = columns
-        self.indexes = columns
+        self.indexes = indexes
 
     @property
     def table(self):
         """ Generate an appropriate table representation to mirror the
         fields known for this table. """
         if not hasattr(self, '_table'):
-            self._table = Table(self.name, self.meta)
-            for col in self.columns:
-                self._table.append_column(col)
+            if self.bind.has_table(self.name):
+                self._table = Table(self.name, self.meta, autoload=True)
+            else:
+                self._table = Table(self.name, self.meta)
+                for col in self.columns:
+                    self._table.append_column(col)
+                log.info("Creating table: %r in %r", self.name, self.bind)
+                self._table.create(self.bind)
+            self._create_indexes(self._table)
         return self._table
+
+    def _create_indexes(self, table):
+        existing = [i.name for i in table.indexes]
+        for columns in self.indexes:
+            index = '_'.join([self.name] + list(columns) + ['idx'])
+            if index in existing:
+                continue
+            log.info("Adding DB index %r: %r", self.name, columns)
+            columns = [table.c[c] for c in columns]
+            index = Index(index, *columns)
+            index.create(bind=self.bind)
 
     @property
     def exists(self):
         return self.bind.has_table(self.table.name)
 
-    def ensure(self):
-        self.create()
-        return self
-
     def insert_bulk(self, conn, rows):
         """ Bulk load data from an iterator to this table. """
         stmt = self.table.insert()
         conn.execute(stmt, rows)
-
-    def create(self):
-        """ Create the table if it does not exist. """
-        if not self.exists:
-            log.info("Creating table: %r in %r", self.name, self.bind)
-            self.table.create(self.bind)
 
     def drop(self):
         """ Drop the table if it does exist. """

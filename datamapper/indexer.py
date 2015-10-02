@@ -30,6 +30,7 @@ class Indexer(object):
     def __init__(self, config, model):
         self.chunk = int(config.get('chunk') or 1000)
         self.config = config
+        self.source = unicode(model.get('source', {}).get('slug'))
 
     @property
     def client(self):
@@ -54,27 +55,29 @@ class Indexer(object):
         table = self.config.entities.table
         q = select([table.c.subject])
         q = q.where(table.c.schema == schema)
-        log.info('Getting entity IDs: %s', q)
+        q = q.where(table.c.source == self.source)
+        log.info('Getting %s by source: %s', schema, self.source)
         for row in generate_results(self.config.engine, q):
             yield row.get('subject')
 
     def load_properties(self, subject):
         table = self.config.properties.table
-        q = select([table.c.predicate, table.c.object])
+        q = select([table.c.predicate, table.c.object, table.c.source])
         q = q.where(table.c.subject == subject)
         for row in generate_results(self.config.engine, q):
-            yield subject, row.get('predicate'), row.get('object')
+            yield row.get('predicate'), row.get('object'), row.get('source')
 
     def generate_entities(self, schema_uri):
         begin = time()
         _, schema = self.config.resolver.resolve(schema_uri)
         binding = Binding(schema, self.config.resolver)
+        doc_type = self.config.get_alias(schema_uri)
         for i, subject in enumerate(self.generate_subjects(schema=schema_uri)):
             entity = objectify(self.load_properties, subject, binding, 3,
                                set())
             yield {
                 '_id': entity.get('id'),
-                '_type': self.config.get_alias(schema_uri),
+                '_type': doc_type,
                 '_index': self.index_name,
                 '_source': entity
             }

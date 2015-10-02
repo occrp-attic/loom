@@ -5,8 +5,8 @@ def objectify(load, node, binding, depth, path=None):
     if path is None:
         path = set()
     if binding.is_object:
-        obj = {'$schema': binding.path}
-        for (s, p, o) in load(node):
+        obj = {'$schema': binding.path, '$sources': []}
+        for (p, o, src) in load(node):
             prop = binding.get_property(p)
             if prop is None or depth <= 1 or o in path:
                 continue
@@ -14,6 +14,10 @@ def objectify(load, node, binding, depth, path=None):
             if depth <= 2 and (prop.is_array or prop.is_object):
                 continue
             sub_path = path.union([node])
+
+            if src not in obj['$sources']:
+                obj['$sources'].append(src)
+
             value = objectify(load, o, prop, depth - 1, sub_path)
             if prop.is_array and prop.name in obj:
                 obj[prop.name].extend(value)
