@@ -30,6 +30,7 @@ mappings:
                 columns:
                     - companies.symbol
                     - fin.symbol
+                format: 'sp500:%s:%s'
             name:
                 column: companies.name
             financials:

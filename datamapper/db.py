@@ -26,7 +26,7 @@ class StatementTable(object):
             self._table = Table(self.table_name, self.meta)
             col = Column('id', BigInteger, primary_key=True)
             self._table.append_column(col)
-            col = Column('subject', Unicode(255))
+            col = Column('subject', Unicode(1024))
             self._table.append_column(col)
             col = Column('predicate', Unicode(255))
             self._table.append_column(col)
