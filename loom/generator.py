@@ -1,4 +1,5 @@
 import logging
+from collections import Mapping
 
 from sqlalchemy.schema import Table
 from sqlalchemy.sql.expression import select
@@ -13,18 +14,17 @@ class Generator(object):
     """ Apply a mapping specification to generate JSON schema data from a
     SQL database using field mappings. """
 
-    def __init__(self, config, model):
+    def __init__(self, config):
         self.config = config
-        self.model = model
-        self.source = unicode(model.get('source', {}).get('slug'))
+        self.source = unicode(config.get('source', {}).get('slug'))
 
     @property
     def tables(self):
         if not hasattr(self, '_tables'):
             self._tables = []
-            for table_obj in self.model.get('tables', []):
+            for table_obj in self.config.get('tables', []):
                 table_name, table_alias = table_obj, None
-                if isinstance(table_obj, dict):
+                if isinstance(table_obj, Mapping):
                     table_name = table_obj.get('table')
                     table_alias = table_obj.get('alias')
 
@@ -39,7 +39,7 @@ class Generator(object):
     def joins(self):
         if not hasattr(self, '_joins'):
             self._joins = []
-            for join in self.model.get('joins', {}):
+            for join in self.config.get('joins', {}):
                 for left, right in join.items():
                     self._joins.append((self.get_column(left),
                                         self.get_column(right)))
@@ -68,7 +68,7 @@ class Generator(object):
         """ Find out which columns are accessed by a particular output
         mapping. """
         columns = []
-        if isinstance(obj, dict):
+        if isinstance(obj, Mapping):
             if 'columns' in obj:
                 columns.extend(obj['columns'])
             if 'column' in obj:
@@ -101,11 +101,11 @@ class Generator(object):
 
     @property
     def mappings(self):
-        return self.model.get('mappings', {}).keys()
+        return self.config.get('mappings', {}).keys()
 
     def generate(self, mapping_name):
         """ Generate all the items produced by the given mapping. """
-        mapping = self.model.get('mappings', {}).get(mapping_name)
+        mapping = self.config.get('mappings', {}).get(mapping_name, raw=True)
         if mapping is None:
             raise SpecException("No such mapping: %s", mapping_name)
         self.config.add_schema(mapping['schema'])

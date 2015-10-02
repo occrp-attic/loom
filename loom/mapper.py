@@ -11,9 +11,9 @@ log = logging.getLogger(__name__)
 class Mapper(object):
     """ Map generated records to the data model. """
 
-    def __init__(self, config, model):
+    def __init__(self, config):
         self.config = config
-        self.generator = Generator(config, model)
+        self.generator = Generator(config)
 
     def records(self, mapping):
         schema = None

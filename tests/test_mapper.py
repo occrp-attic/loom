@@ -14,11 +14,11 @@ class MapperTestCase(TestCase):
 
     def setUp(self):
         self.engine = create_fixtures()
-        self.config = Config({})
-        self.config._engine = self.engine
         with open(os.path.join(FIXTURE_PATH, 'spec.yaml'), 'r') as fh:
-            self.spec = yaml.load(fh)
-        self.mapper = Mapper(self.config, self.spec)
+            config = yaml.load(fh)
+        self.config = Config(config)
+        self.config._engine = self.engine
+        self.mapper = Mapper(self.config)
         self.gen = self.mapper.generator
 
     def tearDown(self):

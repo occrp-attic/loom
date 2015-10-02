@@ -27,10 +27,10 @@ def generate_results(engine, q):
 class Indexer(object):
     """ Index JSON/RDF to ElasticSearch. """
 
-    def __init__(self, config, model):
-        self.chunk = int(config.get('chunk') or 1000)
+    def __init__(self, config):
         self.config = config
-        self.source = unicode(model.get('source', {}).get('slug'))
+        self.chunk = int(config.get('chunk') or 1000)
+        self.source = unicode(config.get('source', {}).get('slug'))
 
     @property
     def client(self):

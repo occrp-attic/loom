@@ -1,9 +1,8 @@
 import logging
 
-import yaml
 import click
 
-from loom.util import LoomException
+from loom.util import LoomException, load_config
 from loom.config import Config
 from loom.mapper import Mapper
 from loom.indexer import Indexer
@@ -14,13 +13,9 @@ log = logging.getLogger(__name__)
 @click.group()
 @click.option('--debug/--no-debug', default=False,
               help='Show log messages.')
-@click.option('--db', default=None,
-              help='A database URI.')
-@click.option('--config', '-c', required=True, type=click.Path(exists=True),
-              help='A configuration file.')
 @click.pass_context
-def cli(ctx, debug, db, config):
-    """ Map data from a SQL database into a variety of data sinks. """
+def cli(ctx, debug):
+    """ Map data from a SQL database into a statement-based graph. """
     ctx.obj = ctx.obj or {}
     ctx.obj['DEBUG'] = debug
 
@@ -31,35 +26,34 @@ def cli(ctx, debug, db, config):
     logging.getLogger('urllib3').setLevel(logging.WARNING)
     logging.getLogger('elasticsearch').setLevel(logging.WARNING)
 
-    ctx.obj['CONFIG'] = Config.from_path(config, database_uri=db)
-
 
 @cli.command('map')
-@click.argument('model_file', type=click.File('r'))
+@click.argument('config_file', type=click.Path(exists=True))
 @click.pass_context
-def map(ctx, model_file):
+def map(ctx, config_file):
     """ Map data from the database into modeled objects. """
     try:
-        config = ctx.obj['CONFIG']
-        model = yaml.load(model_file)
-        mapper = Mapper(config, model)
+        config = load_config(config_file)
+        config = Config(config, path=config_file)
+        mapper = Mapper(config)
         mapper.map()
     except LoomException as le:
         raise click.ClickException(le.message)
 
 
 @cli.command('index')
-@click.argument('model_file', type=click.File('r'))
+@click.argument('config_file', type=click.Path(exists=True))
 @click.pass_context
-def index(ctx, model_file):
+def index(ctx, config_file):
     """ Index modeled objects to ElasticSearch. """
     try:
-        config = ctx.obj['CONFIG']
-        model = yaml.load(model_file)
-        indexer = Indexer(config, model)
+        config = load_config(config_file)
+        config = Config(config, path=config_file)
+        indexer = Indexer(config)
         indexer.index()
-    except loomException as dme:
-        raise click.ClickException(dme.message)
+    except LoomException as le:
+        raise click.ClickException(le.message)
+
 
 if __name__ == '__main__':
     cli(obj={})

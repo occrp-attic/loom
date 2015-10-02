@@ -30,6 +30,7 @@ setup(
         'sqlalchemy',
         'elasticsearch',
         'pyyaml',
+        'psycopg2',
         'click',
         'six'
     ],

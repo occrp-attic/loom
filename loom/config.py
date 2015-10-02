@@ -1,5 +1,4 @@
 import os
-import yaml
 import logging
 import urlparse
 
@@ -23,11 +22,6 @@ class Config(EnvMapping):
         self.database_uri = database_uri
         data['schemas'] = data.get('schemas', {})
         super(Config, self).__init__(data)
-
-    @classmethod
-    def from_path(cls, path, **kwargs):
-        with open(path, 'r') as fh:
-            return cls(yaml.load(fh), path=path, **kwargs)
 
     @property
     def engine(self):
