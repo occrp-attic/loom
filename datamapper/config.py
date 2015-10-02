@@ -6,7 +6,6 @@ import urlparse
 from normality import slugify
 from sqlalchemy import create_engine
 from jsonschema import RefResolver
-from jsongraph import Graph
 
 from datamapper.db import StatementTable
 from datamapper.util import ConfigException, EnvMapping
@@ -59,17 +58,6 @@ class Config(EnvMapping):
     @property
     def schemas(self):
         return self.get('schemas', {})
-
-    @property
-    def graph(self):
-        if not hasattr(self, '_graph'):
-            self._graph = Graph(base_uri=self.base_uri,
-                                resolver=self.resolver,
-                                config=self)
-            for alias, uri in self.schemas.items():
-                self._graph.register(alias, uri)
-            log.debug("Graph: %r", self._graph)
-        return self._graph
 
     @property
     def resolver(self):

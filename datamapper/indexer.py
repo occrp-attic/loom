@@ -1,18 +1,15 @@
 import logging
 from time import time
-from itertools import count
 # from datetime import datetime
 from pprint import pprint  # noqa
 
 from sqlalchemy.sql.expression import select
-
-from rdflib import RDF, URIRef
 from elasticsearch import Elasticsearch
 from elasticsearch.helpers import bulk
 
 from datamapper.util import ConfigException
 from datamapper.elastic import generate_mapping
-from datamapper.model import Binding, objectify
+from datamapper.model import Binding, objectify, TYPE_TYPE
 
 log = logging.getLogger(__name__)
 
@@ -56,7 +53,7 @@ class Indexer(object):
         constraints (i.e. a specific schema or source dataset). """
         table = self.config.statement.table
         q = select([table.c.subject])
-        q = q.where(table.c.predicate == RDF.type)
+        q = q.where(table.c.predicate == TYPE_TYPE)
         q = q.where(table.c.object == schema)
         log.info('Getting entity IDs: %s', q)
         for row in generate_results(self.config.engine, q):

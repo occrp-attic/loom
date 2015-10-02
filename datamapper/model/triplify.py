@@ -1,5 +1,4 @@
 import typecast
-from rdflib import RDF
 
 TYPE_TYPE = 'type'
 TYPE_LINK = 'link'
@@ -8,7 +7,7 @@ TYPE_LINK = 'link'
 def triplify_object(binding):
     """ Create bi-directional bindings for object relationships. """
     if binding.path:
-        yield (binding.subject, RDF.type, binding.path, TYPE_TYPE)
+        yield (binding.subject, TYPE_TYPE, binding.path, TYPE_TYPE)
 
     if binding.parent is not None:
         parent = binding.parent.subject

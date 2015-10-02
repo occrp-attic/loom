@@ -27,7 +27,6 @@ setup(
     test_suite='nose.collector',
     install_requires=[
         'jsonmapping',
-        'jsongraph',
         'sqlalchemy',
         'elasticsearch',
         'pyyaml',
