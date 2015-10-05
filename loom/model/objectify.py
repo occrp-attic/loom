@@ -25,7 +25,6 @@ def objectify(load, node, binding, depth, path=None):
                 obj[prop.name] = value
         return obj
     elif binding.is_array:
-        for item in binding.items:
-            return [objectify(load, node, item, depth, path)]
+        return [objectify(load, node, binding.items, depth, path)]
     else:
         return node

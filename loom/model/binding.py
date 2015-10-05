@@ -1,3 +1,5 @@
+from collections import Mapping
+
 from jsonmapping import SchemaVisitor
 
 from loom.util import make_id
@@ -5,17 +7,14 @@ from loom.util import make_id
 
 class Binding(SchemaVisitor):
 
-    @property
-    def subject(self):
-        if not hasattr(self, '_subject'):
-            self._subject = None
-            subject = self.schema.get('rdfSubject', 'id')
-            for prop in self.properties:
-                if prop.match(subject):
-                    self._subject = prop.data
-            if self._subject is None:
-                self._subject = make_id()
-        return self._subject
+    def get_subject(self, data):
+        if not isinstance(data, Mapping):
+            return None
+        subject = self.schema.get('rdfSubject', 'id')
+        for prop in self.properties:
+            if prop.match(subject):
+                return data.get(prop.name)
+        return make_id()
 
     @property
     def predicate(self):

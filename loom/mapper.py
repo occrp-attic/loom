@@ -2,7 +2,9 @@ import time
 import logging
 from datetime import datetime
 
-from loom.model import Extractor, TYPE_TYPE
+from jsonmapping import Mapper as SchemaMapper
+
+from loom.model import triplify, Binding, TYPE_TYPE
 from loom.db.generator import Generator
 
 log = logging.getLogger(__name__)
@@ -16,11 +18,14 @@ class Mapper(object):
         self.generator = Generator(config)
 
     def records(self, mapping_name):
-        extractor = Extractor(self.config.get_mapping(mapping_name),
-                              self.config.resolver, self.config.base_uri)
+        mapper = SchemaMapper(self.config.get_mapping(mapping_name),
+                              self.config.resolver, scope=self.config.base_uri)
+        binding = Binding(mapper.visitor.schema, self.config.resolver,
+                          scope=self.config.base_uri)
         begin = time.time()
         for i, row in enumerate(self.generator.generate(mapping_name)):
-            for stmt in extractor.extract(row):
+            _, data = mapper.apply(row)
+            for stmt in triplify(binding, data, None):
                 yield stmt
 
             if i > 0 and i % 10000 == 0:
@@ -36,7 +41,7 @@ class Mapper(object):
         entities = self.config.entities.writer(conn)
         properties = self.config.properties.writer(conn)
         for i, (s, p, o, t) in enumerate(self.records(mapping)):
-            continue
+            # continue
             if p == TYPE_TYPE:
                 entities.write({
                     'subject': s,
