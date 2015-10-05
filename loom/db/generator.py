@@ -3,7 +3,6 @@ from collections import Mapping
 
 from sqlalchemy.schema import Table
 from sqlalchemy.sql.expression import select
-from jsonmapping import Mapper
 
 from loom.util import SpecException
 
@@ -16,7 +15,6 @@ class Generator(object):
 
     def __init__(self, config):
         self.config = config
-        self.source = unicode(config.get('source', {}).get('slug'))
 
     @property
     def tables(self):
@@ -94,22 +92,15 @@ class Generator(object):
         # else introduce pagination and sorting.
         rp = self.config.engine.execute(q)
         while True:
-            row = rp.fetchone()
-            if row is None:
+            rows = rp.fetchmany(10000)
+            if not len(rows):
                 break
-            yield dict(row.items())
-
-    @property
-    def mappings(self):
-        return self.config.get('mappings', {}).keys()
+            for row in rows:
+                yield dict(row.items())
 
     def generate(self, mapping_name):
         """ Generate all the items produced by the given mapping. """
-        mapping = self.config.get('mappings', {}).get(mapping_name, raw=True)
-        if mapping is None:
-            raise SpecException("No such mapping: %s", mapping_name)
-        self.config.add_schema(mapping['schema'])
-
+        mapping = self.config.get_mapping(mapping_name)
         columns = set(self.get_column(c) for c in self._scan_columns(mapping))
         tables = set([c.table for c in columns])
 
@@ -117,10 +108,4 @@ class Generator(object):
         for column in columns:
             alias = '%s.%s' % (column.table.name, column.name)
             _columns.append(column.label(alias))
-
-        mapper = Mapper(mapping, self.config.resolver,
-                        scope=self.config.base_uri)
-        for raw in self._query(tables, _columns):
-            _, entity = mapper.apply(raw)
-            # TODO: perform validation here?
-            yield (mapper.bind.path, entity)
+        return self._query(tables, _columns)

@@ -30,7 +30,6 @@ class Indexer(object):
     def __init__(self, config):
         self.config = config
         self.chunk = int(config.get('chunk') or 1000)
-        self.source = unicode(config.get('source', {}).get('slug'))
 
     @property
     def client(self):
@@ -55,8 +54,8 @@ class Indexer(object):
         table = self.config.entities.table
         q = select([table.c.subject])
         q = q.where(table.c.schema == schema)
-        q = q.where(table.c.source == self.source)
-        log.info('Getting %s by source: %s', schema, self.source)
+        q = q.where(table.c.source == self.config.source)
+        log.info('Getting %s by source: %s', schema, self.config.source)
         for row in generate_results(self.config.engine, q):
             yield row.get('subject')
 

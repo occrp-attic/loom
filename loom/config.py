@@ -24,6 +24,10 @@ class Config(EnvMapping):
         super(Config, self).__init__(data)
 
     @property
+    def source(self):
+        return unicode(self.get('source', {}).get('slug'))
+
+    @property
     def engine(self):
         if not hasattr(self, '_engine'):
             database_uri = self.database_uri or self.get('database')
@@ -56,6 +60,17 @@ class Config(EnvMapping):
     def base_uri(self):
         uri = 'file://' + os.path.abspath(self.path)
         return self.get('base_uri', uri)
+
+    @property
+    def mappings(self):
+        return self.get('mappings', {}).keys()
+
+    def get_mapping(self, name):
+        mapping = self.get('mappings', {}).get(name, raw=True)
+        if mapping is None:
+            raise ConfigException("No such mapping: %r", name)
+        self.add_schema(mapping['schema'])
+        return mapping
 
     @property
     def schemas(self):
