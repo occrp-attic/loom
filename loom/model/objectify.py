@@ -10,6 +10,7 @@ def objectify(load, node, visitor, depth, path=None):
             prop = visitor.get_property(p)
             if prop is None or depth <= 1 or o in path:
                 continue
+
             # This is slightly odd but yields purty objects:
             if depth <= 2 and (prop.is_array or prop.is_object):
                 continue

@@ -4,6 +4,7 @@ from time import time
 from pprint import pprint  # noqa
 
 from sqlalchemy.sql.expression import select
+from sqlalchemy.sql import bindparam
 from elasticsearch import Elasticsearch
 from elasticsearch.helpers import bulk
 
@@ -12,16 +13,6 @@ from loom.elastic import generate_mapping
 from loom.model import Binding, objectify
 
 log = logging.getLogger(__name__)
-
-
-def generate_results(engine, q):
-    """ Generate the resulting records for this query. """
-    rp = engine.execute(q)
-    while True:
-        row = rp.fetchone()
-        if row is None:
-            return
-        yield row
 
 
 class Indexer(object):
@@ -56,14 +47,23 @@ class Indexer(object):
         q = q.where(table.c.schema == schema)
         q = q.where(table.c.source == self.config.source)
         log.info('Getting %s by source: %s', schema, self.config.source)
-        for row in generate_results(self.config.engine, q):
-            yield row.subject
+        rp = self.config.engine.execute(q)
+        while True:
+            rows = rp.fetchmany(self.chunk)
+            if not len(rows):
+                return
+            for row in rows:
+                yield row.subject
 
-    def load_properties(self, subject):
-        table = self.config.properties.table
-        q = select([table.c.predicate, table.c.object, table.c.source])
-        q = q.where(table.c.subject == subject)
-        for row in generate_results(self.config.engine, q):
+    def properties_of(self, subject):
+        if not hasattr(self, '_pq'):
+            table = self.config.properties.table
+            q = select([table.c.predicate, table.c.object, table.c.source])
+            q = q.where(table.c.subject == bindparam('subject'))
+            self._pq = q.compile(self.config.engine)
+
+        rp = self.config.engine.execute(self._pq, subject=subject)
+        for row in rp.fetchall():
             # TODO: do we need type casting here?
             yield row.predicate, row.object, row.source
 
@@ -73,8 +73,7 @@ class Indexer(object):
         binding = Binding(schema, self.config.resolver)
         doc_type = self.config.get_alias(schema_uri)
         for i, subject in enumerate(self.generate_subjects(schema=schema_uri)):
-            entity = objectify(self.load_properties, subject, binding, 4,
-                               set())
+            entity = objectify(self.properties_of, subject, binding, 4, set())
             yield {
                 '_id': entity.get('id'),
                 '_type': doc_type,
@@ -108,4 +107,4 @@ class Indexer(object):
         for alias, schema in self.config.schemas.items():
             self.make_doc_type(schema)
             bulk(self.client, self.generate_entities(schema),
-                 stats_only=True, chunk_size=1000)
+                 stats_only=True, chunk_size=self.chunk)

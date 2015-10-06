@@ -1,3 +1,4 @@
+from sqlalchemy import func
 from sqlalchemy.schema import Column
 from sqlalchemy.types import Unicode, BigInteger, DateTime
 
@@ -11,7 +12,7 @@ def get_properties_manager(meta):
                Column('object', Unicode()),
                Column('type', Unicode(32)),
                Column('source', Unicode(255)),
-               Column('timestamp', DateTime()))
+               Column('timestamp', DateTime, default=func.now()))
     indexes = [('subject', ), ('source',)]
     unique = ('subject', 'predicate', 'object', 'source')
     return TableManager(meta, '_property', columns, indexes, unique)
@@ -22,7 +23,7 @@ def get_entities_manager(meta):
                Column('subject', Unicode(1024)),
                Column('schema', Unicode(1024)),
                Column('source', Unicode(255)),
-               Column('timestamp', DateTime()))
+               Column('timestamp', DateTime, default=func.now()))
     indexes = [('schema', 'source'), ('schema',), ('source',)]
     unique = ('subject', 'source')
     return TableManager(meta, '_entity', columns, indexes, unique)

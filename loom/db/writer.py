@@ -15,7 +15,7 @@ class Writer(object):
         self.engine = engine
         self.temp = tempfile.NamedTemporaryFile(suffix='.csv')
         self.fields = [unicode(c.name) for c in self.manager.columns]
-        self.fields = [f for f in self.fields if f != 'id']
+        self.fields = [f for f in self.fields if f not in ['id', 'timestamp']]
         self.writer = unicodecsv.DictWriter(self.temp, fieldnames=self.fields)
         self.rows = 0
 

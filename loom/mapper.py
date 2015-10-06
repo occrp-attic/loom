@@ -39,7 +39,6 @@ class Mapper(object):
 
     def map_mapping(self, mapping):
         """ Bulk load data to the appropriate tables. """
-        ts = datetime.utcnow()
         entities = self.config.entities.writer()
         properties = self.config.properties.writer()
         for i, (s, p, o, t) in enumerate(self.records(mapping)):
@@ -47,8 +46,7 @@ class Mapper(object):
                 entities.write({
                     'subject': s,
                     'schema': o,
-                    'source': self.config.source,
-                    'timestamp': ts
+                    'source': self.config.source
                 })
             else:
                 properties.write({
@@ -56,8 +54,7 @@ class Mapper(object):
                     'predicate': p,
                     'object': o,
                     'type': t,
-                    'source': self.config.source,
-                    'timestamp': ts
+                    'source': self.config.source
                 })
 
         properties.flush()
