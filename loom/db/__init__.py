@@ -12,7 +12,7 @@ def get_properties_manager(meta):
                Column('type', Unicode(32)),
                Column('source', Unicode(255)),
                Column('timestamp', DateTime()))
-    indexes = [('subject', ), ]
+    indexes = [('subject', ), ('source',)]
     unique = ('subject', 'predicate', 'object', 'source')
     return TableManager(meta, '_property', columns, indexes, unique)
 
@@ -23,6 +23,6 @@ def get_entities_manager(meta):
                Column('schema', Unicode(1024)),
                Column('source', Unicode(255)),
                Column('timestamp', DateTime()))
-    indexes = [('schema', 'source'), ('schema',)]
+    indexes = [('schema', 'source'), ('schema',), ('source',)]
     unique = ('subject', 'source')
     return TableManager(meta, '_entity', columns, indexes, unique)

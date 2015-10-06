@@ -10,9 +10,9 @@ class Writer(object):
     """ Do chunked bulk writes to the database, against a particular table
     manager. """
 
-    def __init__(self, manager, conn):
+    def __init__(self, manager, engine):
         self.manager = manager
-        self.conn = conn
+        self.engine = engine
         self.temp = tempfile.NamedTemporaryFile(suffix='.csv')
         self.fields = [unicode(c.name) for c in self.manager.columns]
         self.fields = [f for f in self.fields if f != 'id']
@@ -23,7 +23,7 @@ class Writer(object):
         self.temp.flush()
         self.temp.seek(0)
         begin = time()
-        raw_conn = self.conn.engine.raw_connection()
+        raw_conn = self.engine.raw_connection()
         log.info("Bulk loading %s rows into %r", self.rows, self.manager.name)
         cur = raw_conn.cursor()
         q = """

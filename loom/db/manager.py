@@ -49,28 +49,37 @@ class TableManager(object):
     def exists(self):
         return self.bind.has_table(self.table.name)
 
-    def writer(self, conn):
-        return Writer(self, conn)
+    def writer(self):
+        return Writer(self, self.bind)
 
-    def delete_source(self, conn, source):
+    def delete(self, source):
+        log.info("Deleting existing %r data: %r", self.name, source)
         q = self.table.delete()
         q = q.where(self.table.c.source == source)
+        conn = self.bind.connect()
+        tx = conn.begin()
         conn.execute(q)
+        tx.commit()
 
-    def clean(self, conn):
+    def dedupe(self, source):
+        log.info("De-duplicating table: %r (source = %r)", self.name, source)
         args = {
             'name': self.name,
+            'source': source,
             'unique': ', '.join(self.unique)
         }
-        log.info("Cleaning and optimizing table: %r", self.name)
         dedupe_q = """
-            DELETE FROM %(name)s WHERE id IN (SELECT id
-                FROM (SELECT id, ROW_NUMBER() OVER (partition BY %(unique)s
-                ORDER BY id) AS rnum FROM %(name)s) t
+            DELETE FROM %(name)s WHERE source = '%(source)s' AND id IN (
+                SELECT id FROM (
+                    SELECT id, ROW_NUMBER() OVER (partition BY %(unique)s
+                    ORDER BY id) AS rnum
+                FROM %(name)s WHERE source = '%(source)s') t
                 WHERE t.rnum > 1);
-        """
-        conn.execute(dedupe_q % args)
-        # conn.execute("VACUUM FULL %(name)s;" % args)
+        """ % args
+        conn = self.bind.connect()
+        tx = conn.begin()
+        conn.execute(dedupe_q)
+        tx.commit()
 
     def drop(self):
         """ Drop the table if it does exist. """

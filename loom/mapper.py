@@ -37,11 +37,11 @@ class Mapper(object):
                 log.info("Generating %r: %s records (%s, %.2fms/r)",
                          mapping_name, i, stmts, speed)
 
-    def map_mapping(self, conn, mapping):
+    def map_mapping(self, mapping):
         """ Bulk load data to the appropriate tables. """
         ts = datetime.utcnow()
-        entities = self.config.entities.writer(conn)
-        properties = self.config.properties.writer(conn)
+        entities = self.config.entities.writer()
+        properties = self.config.properties.writer()
         for i, (s, p, o, t) in enumerate(self.records(mapping)):
             if p == TYPE_TYPE:
                 entities.write({
@@ -59,22 +59,16 @@ class Mapper(object):
                     'source': self.config.source,
                     'timestamp': ts
                 })
+
         properties.flush()
         entities.flush()
 
     def map(self):
-        conn = self.config.engine.connect()
-        # tx = conn.begin()
-        try:
-            self.config.entities.delete_source(conn, self.config.source)
-            self.config.properties.delete_source(conn, self.config.source)
+        self.config.entities.delete(self.config.source)
+        self.config.properties.delete(self.config.source)
 
-            for mapping in self.config.mappings:
-                self.map_mapping(conn, mapping)
-            # tx.commit()
+        for mapping in self.config.mappings:
+            self.map_mapping(mapping)
 
-            # self.config.entities.clean(conn)
-            # self.config.properties.clean(conn)
-        except:
-            # tx.rollback()
-            raise
+        self.config.entities.dedupe(self.config.source)
+        self.config.properties.dedupe(self.config.source)
