@@ -71,7 +71,7 @@ class EnvMapping(MutableMapping):
 
 def make_id():
     uuid = uuid4().int
-    chars = [u'urn:']
+    chars = [u'urn:b:']
     while uuid:
         uuid, digit = divmod(uuid, len(ALPHABET))
         chars.append(ALPHABET[digit])

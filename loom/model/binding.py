@@ -11,9 +11,8 @@ class Binding(SchemaVisitor):
         if not isinstance(data, Mapping):
             return None
         subject = self.schema.get('rdfSubject', 'id')
-        for prop in self.properties:
-            if prop.match(subject):
-                return data.get(prop.name)
+        if data.get(subject):
+            return data.get(subject)
         return make_id()
 
     @property

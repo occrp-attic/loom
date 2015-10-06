@@ -73,7 +73,7 @@ class Indexer(object):
         binding = Binding(schema, self.config.resolver)
         doc_type = self.config.get_alias(schema_uri)
         for i, subject in enumerate(self.generate_subjects(schema=schema_uri)):
-            entity = objectify(self.load_properties, subject, binding, 3,
+            entity = objectify(self.load_properties, subject, binding, 4,
                                set())
             yield {
                 '_id': entity.get('id'),

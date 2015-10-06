@@ -23,17 +23,21 @@ class Mapper(object):
         binding = Binding(mapper.visitor.schema, self.config.resolver,
                           scope=self.config.base_uri)
         begin = time.time()
+        stmts = 0
         for i, row in enumerate(self.generator.generate(mapping_name)):
             _, data = mapper.apply(row)
+            # from pprint import pprint
+            # pprint(data)
             for stmt in triplify(binding, data, None):
+                stmts += 1
                 yield stmt
 
             if i > 0 and i % 10000 == 0:
                 elapsed = time.time() - begin
                 per_record = float(elapsed) / float(i)
                 speed = per_record * 1000
-                log.info("Generating %r: %s records (%.2fms/r)",
-                         mapping_name, i, speed)
+                log.info("Generating %r: %s records (%s, %.2fms/r)",
+                         mapping_name, i, stmts, speed)
 
     def map_mapping(self, conn, mapping):
         """ Bulk load data to the appropriate tables. """
