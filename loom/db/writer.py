@@ -24,7 +24,7 @@ class Writer(object):
         self.temp.seek(0)
         begin = time()
         raw_conn = self.conn.engine.raw_connection()
-        log.info("Bulk loading data into %r", self.manager.name)
+        log.info("Bulk loading %s rows into %r", self.rows, self.manager.name)
         cur = raw_conn.cursor()
         q = """
             COPY %s (%s) FROM STDIN
@@ -34,8 +34,8 @@ class Writer(object):
         cur.copy_expert(q, self.temp)
         raw_conn.commit()
         cur.close()
-        duration = (time() - begin) / 1000
-        log.info("COPY done after %.2fms (%s rows)", duration, self.rows)
+        duration = (time() - begin)
+        log.info("COPY done after %.2fs", duration)
         self.temp.close()
 
     def write(self, record):
