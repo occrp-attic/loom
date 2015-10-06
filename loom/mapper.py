@@ -67,5 +67,5 @@ class Mapper(object):
         for mapping in self.config.mappings:
             self.map_mapping(mapping)
 
-        self.config.entities.dedupe(self.config.source)
-        self.config.properties.dedupe(self.config.source)
+        # self.config.entities.dedupe(self.config.source)
+        # self.config.properties.dedupe(self.config.source)
