@@ -21,7 +21,7 @@ def generate_results(engine, q):
         row = rp.fetchone()
         if row is None:
             return
-        yield dict(row.items())
+        yield row
 
 
 class Indexer(object):
@@ -57,7 +57,7 @@ class Indexer(object):
         q = q.where(table.c.source == self.config.source)
         log.info('Getting %s by source: %s', schema, self.config.source)
         for row in generate_results(self.config.engine, q):
-            yield row.get('subject')
+            yield row.subject
 
     def load_properties(self, subject):
         table = self.config.properties.table
@@ -65,7 +65,7 @@ class Indexer(object):
         q = q.where(table.c.subject == subject)
         for row in generate_results(self.config.engine, q):
             # TODO: do we need type casting here?
-            yield row.get('predicate'), row.get('object'), row.get('source')
+            yield row.predicate, row.object, row.source
 
     def generate_entities(self, schema_uri):
         begin = time()
