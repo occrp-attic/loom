@@ -26,8 +26,6 @@ class Mapper(object):
         stmts = 0
         for i, row in enumerate(self.generator.generate(mapping_name)):
             _, data = mapper.apply(row)
-            # from pprint import pprint
-            # pprint(data)
             for stmt in triplify(binding, data, None):
                 stmts += 1
                 yield stmt
@@ -45,7 +43,6 @@ class Mapper(object):
         entities = self.config.entities.writer(conn)
         properties = self.config.properties.writer(conn)
         for i, (s, p, o, t) in enumerate(self.records(mapping)):
-            # continue
             if p == TYPE_TYPE:
                 entities.write({
                     'subject': s,
@@ -67,17 +64,17 @@ class Mapper(object):
 
     def map(self):
         conn = self.config.engine.connect()
-        tx = conn.begin()
+        # tx = conn.begin()
         try:
             self.config.entities.delete_source(conn, self.config.source)
             self.config.properties.delete_source(conn, self.config.source)
 
             for mapping in self.config.mappings:
                 self.map_mapping(conn, mapping)
-            tx.commit()
+            # tx.commit()
 
-            self.config.entities.clean(conn)
-            self.config.properties.clean(conn)
+            # self.config.entities.clean(conn)
+            # self.config.properties.clean(conn)
         except:
-            tx.rollback()
+            # tx.rollback()
             raise
