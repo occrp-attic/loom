@@ -19,7 +19,7 @@ class Config(EnvMapping):
 
     def __init__(self, data, path=None, database_uri=None):
         self.path = path or os.getcwd()
-        self.database_uri = database_uri
+        self._database = database_uri
         data['schemas'] = data.get('schemas', {})
         super(Config, self).__init__(data)
 
@@ -28,13 +28,18 @@ class Config(EnvMapping):
         return unicode(self.get('source', {}).get('slug'))
 
     @property
+    def database(self):
+        if self._database is None:
+            self._database = self.get('database')
+            if self._database is None:
+                raise ConfigException("No database URI configued!")
+            log.debug("Database: %r", self._database)
+        return self._database
+
+    @property
     def engine(self):
         if not hasattr(self, '_engine'):
-            database_uri = self.database_uri or self.get('database')
-            if database_uri is None:
-                raise ConfigException("No database URI configued!")
-            log.debug("Database: %r", database_uri)
-            self._engine = create_engine(database_uri)
+            self._engine = create_engine(self.database)
         return self._engine
 
     @property
@@ -47,13 +52,13 @@ class Config(EnvMapping):
     @property
     def entities(self):
         if not hasattr(self, '_entities'):
-            self._entities = get_entities_manager(self.metadata)
+            self._entities = get_entities_manager(self)
         return self._entities
 
     @property
     def properties(self):
         if not hasattr(self, '_properties'):
-            self._properties = get_properties_manager(self.metadata)
+            self._properties = get_properties_manager(self)
         return self._properties
 
     @property

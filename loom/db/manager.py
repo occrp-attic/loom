@@ -10,9 +10,10 @@ log = logging.getLogger(__name__)
 class TableManager(object):
     """ The table manager manages writing and reading data from SQL tables. """
 
-    def __init__(self, meta, name, columns, indexes, unique):
-        self.bind = meta.bind
-        self.meta = meta
+    def __init__(self, config, name, columns, indexes, unique):
+        self.config = config
+        self.bind = config.engine
+        self.meta = config.metadata
         self.name = name
         self.columns = columns
         self.indexes = indexes
@@ -31,7 +32,7 @@ class TableManager(object):
                     self._table.append_column(col)
                 log.info("Creating table: %r in %r", self.name, self.bind)
                 self._table.create(self.bind)
-            self._create_indexes(self._table)
+            # self._create_indexes(self._table)
         return self._table
 
     def _create_indexes(self, table):
@@ -50,7 +51,7 @@ class TableManager(object):
         return self.bind.has_table(self.table.name)
 
     def writer(self):
-        return Writer(self, self.bind)
+        return Writer(self)
 
     def delete(self, source):
         log.info("Deleting existing %r data: %r", self.name, source)

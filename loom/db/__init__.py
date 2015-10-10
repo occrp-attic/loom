@@ -5,7 +5,7 @@ from sqlalchemy.types import Unicode, BigInteger, DateTime
 from loom.db.manager import TableManager
 
 
-def get_properties_manager(meta):
+def get_properties_manager(config):
     columns = (Column('id', BigInteger, primary_key=True),
                Column('subject', Unicode(1024)),
                Column('predicate', Unicode(255)),
@@ -15,10 +15,10 @@ def get_properties_manager(meta):
                Column('timestamp', DateTime, default=func.now()))
     indexes = [('subject', ), ('source',)]
     unique = ('subject', 'predicate', 'object', 'source')
-    return TableManager(meta, '_property', columns, indexes, unique)
+    return TableManager(config, '_property', columns, indexes, unique)
 
 
-def get_entities_manager(meta):
+def get_entities_manager(config):
     columns = (Column('id', BigInteger, primary_key=True),
                Column('subject', Unicode(1024)),
                Column('schema', Unicode(1024)),
@@ -26,4 +26,4 @@ def get_entities_manager(meta):
                Column('timestamp', DateTime, default=func.now()))
     indexes = [('schema', 'source'), ('schema',), ('source',)]
     unique = ('subject', 'source')
-    return TableManager(meta, '_entity', columns, indexes, unique)
+    return TableManager(config, '_entity', columns, indexes, unique)

@@ -13,9 +13,9 @@ class Writer(object):
     """ Do chunked bulk writes to the database, against a particular table
     manager. """
 
-    def __init__(self, manager, engine):
+    def __init__(self, manager):
         self.manager = manager
-        self.engine = engine
+        self.engine = manager.config.engine
         self.fields = [unicode(c.name) for c in self.manager.columns]
         self.fields = [f for f in self.fields if f not in ['id', 'timestamp']]
         self.rows = 0
@@ -51,6 +51,10 @@ class Writer(object):
         cur.copy_expert(q, temp)
         raw_conn.commit()
         cur.close()
+        # import subprocess
+        # subprocess.check_call([
+        #     'psql', self.manager.config.database, '-c', q,
+        # ], stdin=temp)
         duration = (time() - begin)
         log.info("COPY done after %.2fs", duration)
         temp.close()
