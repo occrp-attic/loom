@@ -3,6 +3,7 @@ from time import time
 # from datetime import datetime
 from pprint import pprint  # noqa
 
+from pymongo.cursor import CursorType
 from sqlalchemy.sql.expression import select
 from sqlalchemy.sql import bindparam
 from elasticsearch import Elasticsearch
@@ -42,30 +43,17 @@ class Indexer(object):
     def generate_subjects(self, schema):
         """ Iterate over all entity IDs which match the current set of
         constraints (i.e. a specific schema or source dataset). """
-        table = self.config.entities.table
-        q = select([table.c.subject])
-        q = q.where(table.c.schema == schema)
-        q = q.where(table.c.source == self.config.source)
+        q = {'schema': schema, 'source': self.config.source}
         log.info('Getting %s by source: %s', schema, self.config.source)
-        rp = self.config.engine.execute(q)
-        while True:
-            rows = rp.fetchmany(self.chunk)
-            if not len(rows):
-                return
-            for row in rows:
-                yield row.subject
+        for doc in self.config.entities.collection.find(q, ['subject']):
+            yield doc.get('subject')
 
     def properties_of(self, subject):
-        if not hasattr(self, '_pq'):
-            table = self.config.properties.table
-            q = select([table.c.predicate, table.c.object, table.c.source])
-            q = q.where(table.c.subject == bindparam('subject'))
-            self._pq = q.compile(self.config.engine)
-
-        rp = self.config.engine.execute(self._pq, subject=subject)
-        for row in rp.fetchall():
+        q = {'subject': subject}
+        proj = ['predicate', 'object', 'source']
+        for doc in self.config.entities.collection.find(q, proj, cursor_type=CursorType.EXHAUST):
             # TODO: do we need type casting here?
-            yield row.predicate, row.object, row.source
+            yield doc.get('predicate'), doc.get('object'), doc.get('source')
 
     def generate_entities(self, schema_uri):
         begin = time()
