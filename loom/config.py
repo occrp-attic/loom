@@ -2,6 +2,7 @@ import os
 import logging
 import urlparse
 
+import pymongo
 from normality import slugify
 from sqlalchemy import create_engine
 from sqlalchemy.schema import MetaData
@@ -48,6 +49,14 @@ class Config(EnvMapping):
             self._metadata = MetaData()
             self._metadata.bind = self.engine
         return self._metadata
+
+    @property
+    def mongo(self):
+        if not hasattr(self, '_mongo'):
+            uri = self.get('mongodb', 'mongodb://localhost')
+            client = pymongo.MongoClient(uri)
+            self._mongo = client['loom']
+        return self._mongo
 
     @property
     def entities(self):

@@ -1,29 +1,13 @@
-from sqlalchemy import func
-from sqlalchemy.schema import Column
-from sqlalchemy.types import Unicode, BigInteger, DateTime
-
-from loom.db.manager import TableManager
+from loom.db.manager import Manager
 
 
 def get_properties_manager(config):
-    columns = (Column('id', BigInteger, primary_key=True),
-               Column('subject', Unicode(1024)),
-               Column('predicate', Unicode(255)),
-               Column('object', Unicode()),
-               Column('type', Unicode(32)),
-               Column('source', Unicode(255)),
-               Column('timestamp', DateTime, default=func.now()))
     indexes = [('subject', ), ('source',)]
     unique = ('subject', 'predicate', 'object', 'source')
-    return TableManager(config, '_property', columns, indexes, unique)
+    return Manager(config, 'property', indexes, unique)
 
 
 def get_entities_manager(config):
-    columns = (Column('id', BigInteger, primary_key=True),
-               Column('subject', Unicode(1024)),
-               Column('schema', Unicode(1024)),
-               Column('source', Unicode(255)),
-               Column('timestamp', DateTime, default=func.now()))
     indexes = [('schema', 'source'), ('schema',), ('source',)]
-    unique = ('subject', 'source')
-    return TableManager(config, '_entity', columns, indexes, unique)
+    unique = ('subject', 'schema', 'source')
+    return Manager(config, 'entity', indexes, unique)
