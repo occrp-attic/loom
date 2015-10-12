@@ -24,27 +24,29 @@ class TableManager(object):
         """ Generate an appropriate table representation to mirror the
         fields known for this table. """
         if not hasattr(self, '_table'):
+            bind = self.bind.connect()
+            bind.connection.connection.set_isolation_level(0)
             if self.bind.has_table(self.name):
                 self._table = Table(self.name, self.meta, autoload=True)
             else:
                 self._table = Table(self.name, self.meta)
                 for col in self.columns:
                     self._table.append_column(col)
-                log.info("Creating table: %r in %r", self.name, self.bind)
-                self._table.create(self.bind)
-            # self._create_indexes(self._table)
+                log.info("Creating table: %r in %r", self.name, bind)
+                self._table.create(bind)
+            self._create_indexes(self._table, bind)
         return self._table
 
-    def _create_indexes(self, table):
+    def _create_indexes(self, table, bind):
         existing = [i.name for i in table.indexes]
         for columns in self.indexes:
             index = '_'.join([self.name] + list(columns) + ['idx'])
             if index in existing:
                 continue
-            log.info("Adding DB index %r: %r", self.name, columns)
+            log.info("Adding concurrent index %r: %r", self.name, columns)
             columns = [table.c[c] for c in columns]
-            index = Index(index, *columns)
-            index.create(bind=self.bind)
+            index = Index(index, *columns, postgresql_concurrently=True)
+            index.create(bind=bind)
 
     @property
     def exists(self):
