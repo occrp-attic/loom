@@ -25,6 +25,7 @@ class Indexer(object):
     def configure(self):
         client = self.config.elastic_client
         index = self.config.elastic_index
+        client.indices.create(index=index, ignore=400)
         try:
             client.indices.close(index=index)
             client.indices.put_settings(SETTINGS, index=index)
@@ -120,9 +121,8 @@ class Indexer(object):
 
     def index(self):
         client = self.config.elastic_client
-        index = self.config.elastic_index
-        client.indices.create(index=index, ignore=400)
-        log.info('Indexing to: %r (index: %r)', client, index)
+        log.info('Indexing to: %r (index: %r)', client,
+                 self.config.elastic_index)
         for alias, schema in self.config.schemas.items():
             self.make_doc_type(schema)
             bulk(client, self.generate_entities(schema),
