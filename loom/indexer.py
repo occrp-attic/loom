@@ -25,7 +25,9 @@ class Indexer(object):
     def configure(self):
         client = self.config.elastic_client
         index = self.config.elastic_index
+        log.warning("Configuring index at: %s", client)
         client.indices.create(index=index, ignore=400)
+        client.cluster.health(wait_for_status='yellow', request_timeout=10)
         try:
             client.indices.close(index=index)
             client.indices.put_settings(SETTINGS, index=index)
