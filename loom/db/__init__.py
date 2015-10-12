@@ -13,7 +13,7 @@ def get_properties_manager(config):
                Column('source', Unicode(255)))
     indexes = [('subject', ), ('source',)]
     unique = ('subject', 'predicate', 'object', 'source')
-    return TableManager(config, '_property', columns, indexes, unique)
+    return TableManager(config, 'property', columns, indexes, unique)
 
 
 def get_entities_manager(config):
@@ -23,4 +23,4 @@ def get_entities_manager(config):
                Column('source', Unicode(255)))
     indexes = [('schema', 'source'), ('schema',), ('source',)]
     unique = ('subject', 'source')
-    return TableManager(config, '_entity', columns, indexes, unique)
+    return TableManager(config, 'entity', columns, indexes, unique)

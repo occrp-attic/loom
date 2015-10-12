@@ -1,7 +1,7 @@
 import logging
 from collections import Mapping
 
-from sqlalchemy.schema import Table
+from sqlalchemy.schema import Table, MetaData
 from sqlalchemy.sql.expression import select
 
 from loom.util import SpecException
@@ -15,6 +15,8 @@ class Generator(object):
 
     def __init__(self, config):
         self.config = config
+        self.metadata = MetaData()
+        self.metadata.bind = self.config.ods
 
     @property
     def tables(self):
@@ -26,7 +28,7 @@ class Generator(object):
                     table_name = table_obj.get('table')
                     table_alias = table_obj.get('alias')
 
-                table = Table(table_name, self.config.metadata, autoload=True)
+                table = Table(table_name, self.metadata, autoload=True)
                 if table_alias is not None:
                     table = table.alias(table_alias)
 
@@ -90,7 +92,7 @@ class Generator(object):
         log.info("Query: %s", q)
         # TODO: see if this scales (i.e. the cursor loads data progressively)
         # else introduce pagination and sorting.
-        rp = self.config.engine.execute(q)
+        rp = self.config.ods.execute(q)
         while True:
             rows = rp.fetchmany(10000)
             if not len(rows):

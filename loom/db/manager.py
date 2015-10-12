@@ -1,6 +1,7 @@
 import logging
 
 from sqlalchemy.schema import Table, Index
+from sqlalchemy.schema import MetaData
 
 from loom.db.writer import Writer
 
@@ -13,7 +14,8 @@ class TableManager(object):
     def __init__(self, config, name, columns, indexes, unique):
         self.config = config
         self.bind = config.engine
-        self.meta = config.metadata
+        self.meta = MetaData()
+        self.meta.bind = config.engine
         self.name = name
         self.columns = columns
         self.indexes = indexes
@@ -48,10 +50,6 @@ class TableManager(object):
             index = Index(index, *columns, postgresql_concurrently=True)
             index.create(bind=bind)
 
-    @property
-    def exists(self):
-        return self.bind.has_table(self.table.name)
-
     def writer(self):
         return Writer(self)
 
@@ -84,11 +82,20 @@ class TableManager(object):
         conn.execute(dedupe_q)
         tx.commit()
 
+    def create(self):
+        """ Create the table if it does not exist. """
+        if self.exists:
+            log.info('Ensuring table: %r', self.table.name)
+
     def drop(self):
         """ Drop the table if it does exist. """
         if self.exists:
             self.table.drop()
         self._table = None
+
+    @property
+    def exists(self):
+        return self.bind.has_table(self.table.name)
 
     def __repr__(self):
         return "<TableManager(%r)>" % (self.name)

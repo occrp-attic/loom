@@ -4,7 +4,6 @@ import urlparse
 
 from normality import slugify
 from sqlalchemy import create_engine
-from sqlalchemy.schema import MetaData
 from jsonschema import RefResolver
 from elasticsearch import Elasticsearch
 
@@ -28,37 +27,37 @@ class Config(EnvMapping):
         return unicode(self.get('source', {}).get('slug'))
 
     @property
-    def database(self):
-        if not hasattr(self, '_database'):
-            self._database = self.get('database')
-            if self._database is None:
-                raise ConfigException("No database URI configued!")
-            log.debug("Database: %r", self._database)
-        return self._database
+    def ods(self):
+        if not hasattr(self, '_ods'):
+            uri = self.get('ods_database')
+            if uri is None:
+                raise ConfigException("No source database URI configured!")
+            log.info("Source database: %r", uri)
+            self._ods = create_engine(uri)
+        return self._ods
 
     @property
     def engine(self):
         if not hasattr(self, '_engine'):
-            self._engine = create_engine(self.database)
+            uri = self.get('loom_database')
+            if uri is None:
+                raise ConfigException("No statement database URI configured!")
+            log.info("Loom database: %r", uri)
+            self._engine = create_engine(uri)
         return self._engine
-
-    @property
-    def metadata(self):
-        if not hasattr(self, '_metadata'):
-            self._metadata = MetaData()
-            self._metadata.bind = self.engine
-        return self._metadata
 
     @property
     def entities(self):
         if not hasattr(self, '_entities'):
             self._entities = get_entities_manager(self)
+            self._entities.create()
         return self._entities
 
     @property
     def properties(self):
         if not hasattr(self, '_properties'):
             self._properties = get_properties_manager(self)
+            self._properties.create()
         return self._properties
 
     @property
