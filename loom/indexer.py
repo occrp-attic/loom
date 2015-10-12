@@ -22,6 +22,16 @@ class Indexer(object):
         self.config = config
         self.chunk = int(config.get('chunk') or 1000)
 
+    def configure(self):
+        client = self.config.elastic_client
+        index = self.config.elastic_index
+        try:
+            client.indices.close(index=index)
+            client.indices.put_settings(SETTINGS, index=index)
+        except Exception as ex:
+            log.warning("Cannot update index settings: %s", ex)
+        client.indices.open(index=index)
+
     @property
     def client(self):
         if not hasattr(self, '_client'):
@@ -101,12 +111,6 @@ class Indexer(object):
         mapping = client.indices.get_mapping(index=index, doc_type=doc_type)
         mapping = generate_mapping(mapping, index, doc_type, schema,
                                    self.config.resolver)
-        try:
-            client.indices.close(index=index)
-            client.indices.put_settings(SETTINGS, index=index)
-        except Exception as ex:
-            log.warning("Cannot update index settings: %s", ex)
-        client.indices.open(index=index)
         try:
             client.indices.put_mapping(index=index, doc_type=doc_type,
                                        body={doc_type: mapping})

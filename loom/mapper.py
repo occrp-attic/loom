@@ -1,6 +1,5 @@
 import time
 import logging
-from datetime import datetime
 
 from jsonmapping import Mapper as SchemaMapper
 
@@ -61,11 +60,5 @@ class Mapper(object):
         entities.flush()
 
     def map(self):
-        self.config.entities.delete(self.config.source)
-        self.config.properties.delete(self.config.source)
-
         for mapping in self.config.mappings:
             self.map_mapping(mapping)
-
-        # self.config.entities.dedupe(self.config.source)
-        # self.config.properties.dedupe(self.config.source)

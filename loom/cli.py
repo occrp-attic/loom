@@ -50,9 +50,39 @@ def index(ctx, config_file):
         config = load_config(config_file)
         config = Config(config, path=config_file)
         indexer = Indexer(config)
+        indexer.configure()
         indexer.index()
     except LoomException as le:
         raise click.ClickException(le.message)
+
+
+@cli.command('flush')
+@click.argument('config_file', type=click.Path(exists=True))
+@click.pass_context
+def flush(ctx, config_file):
+    """ Clear all statements about a source from the statement DB. """
+    try:
+        config = load_config(config_file)
+        config = Config(config, path=config_file)
+        config.entities.delete(config.source)
+        config.properties.delete(config.source)
+    except LoomException as le:
+        raise click.ClickException(le.message)
+
+
+@cli.command('dedupe')
+@click.argument('config_file', type=click.Path(exists=True))
+@click.pass_context
+def dedupe(ctx, config_file):
+    """ De-duplicate statements inside the statement DB. """
+    try:
+        config = load_config(config_file)
+        config = Config(config, path=config_file)
+        config.entities.dedupe(config.source)
+        config.properties.dedupe(config.source)
+    except LoomException as le:
+        raise click.ClickException(le.message)
+
 
 
 if __name__ == '__main__':
