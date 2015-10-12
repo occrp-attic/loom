@@ -6,6 +6,7 @@ from normality import slugify
 from sqlalchemy import create_engine
 from sqlalchemy.schema import MetaData
 from jsonschema import RefResolver
+from elasticsearch import Elasticsearch
 
 from loom.db import get_entities_manager, get_properties_manager
 from loom.util import ConfigException, EnvMapping
@@ -17,9 +18,8 @@ class Config(EnvMapping):
     """ Parsing a configuration file. This specifies the database connection
     and the settings for each data sink. """
 
-    def __init__(self, data, path=None, database_uri=None):
+    def __init__(self, data, path=None):
         self.path = path or os.getcwd()
-        self._database = database_uri
         data['schemas'] = data.get('schemas', {})
         super(Config, self).__init__(data)
 
@@ -29,7 +29,7 @@ class Config(EnvMapping):
 
     @property
     def database(self):
-        if self._database is None:
+        if not hasattr(self, '_database'):
             self._database = self.get('database')
             if self._database is None:
                 raise ConfigException("No database URI configued!")
@@ -76,6 +76,23 @@ class Config(EnvMapping):
             raise ConfigException("No such mapping: %r", name)
         self.add_schema(mapping['schema'])
         return mapping
+
+    @property
+    def elastic_client(self):
+        if not hasattr(self, '_elastic_client'):
+            host = self.get('elastic_host')
+            if host is None:
+                raise ConfigException("No 'elastic_host' is configured.")
+            self._elastic_client = Elasticsearch([host])
+        return self._elastic_client
+
+    @property
+    def elastic_index(self):
+        if not hasattr(self, '_elastic_index'):
+            self._elastic_index = self.get('elastic_index')
+            if self._elastic_index is None:
+                raise ConfigException("No 'elastic_index' is configured.")
+        return self._elastic_index
 
     @property
     def schemas(self):

@@ -7,8 +7,33 @@ BASE_MAPPING = {
     "properties": {
         "$schema": {"type": "string", "index": "not_analyzed"},
         "$sources": {"type": "string", "index": "not_analyzed"},
-        "_updated_at": {"type": "date", "index": "not_analyzed"},
-        "_indexed_at": {"type": "date", "index": "not_analyzed"}
+        "$text": {"type": "string", "index": "analyzed"},
+        "$linkcount": {"type": "integer", "index": "not_analyzed"},
+        "$attrcount": {"type": "integer", "index": "not_analyzed"},
+        "$latin": {
+            "type": "string",
+            "analyzer": "latin"
+        },
+        "$indexed_at": {"type": "date", "index": "not_analyzed"}
+    }
+}
+
+SETTINGS = {
+    "index": {
+        "analysis": {
+            "analyzer": {
+                "latin": {
+                    "tokenizer": "icu_tokenizer",
+                    "filter": ["latinize", "lowercase"]
+                }
+            },
+            "filter": {
+                "latinize": {
+                    "type": "icu_transform",
+                    "id": "Any-Latin; NFD; [:Nonspacing Mark:] Remove; NFC; Latin-ASCII"
+                }
+            }
+        }
     }
 }
 

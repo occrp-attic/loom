@@ -8,8 +8,8 @@ from sqlalchemy.sql import bindparam
 from elasticsearch import Elasticsearch
 from elasticsearch.helpers import bulk
 
-from loom.util import ConfigException
-from loom.elastic import generate_mapping
+from loom.util import ConfigException, extract_text, count_attrs
+from loom.elastic import generate_mapping, SETTINGS
 from loom.model import Binding, objectify
 
 log = logging.getLogger(__name__)
@@ -74,10 +74,18 @@ class Indexer(object):
         doc_type = self.config.get_alias(schema_uri)
         for i, subject in enumerate(self.generate_subjects(schema=schema_uri)):
             entity = objectify(self.properties_of, subject, binding, 4, set())
+
+            # extend the object to index form
+            attr_count, link_count = count_attrs(entity)
+            entity['$attrcount'] = attr_count
+            entity['$linkcount'] = link_count
+            entity['$text'] = extract_text(entity)
+            entity['$latin'] = entity['$text']  # handled by ICU in ES
+
             yield {
                 '_id': entity.get('id'),
                 '_type': doc_type,
-                '_index': self.index_name,
+                '_index': self.config.elastic_index,
                 '_source': entity
             }
             if i > 0 and i % 1000 == 0:
@@ -87,24 +95,31 @@ class Indexer(object):
                          schema_uri, i, per_rec)
 
     def make_doc_type(self, schema):
+        client = self.config.elastic_client
+        index = self.config.elastic_index
         doc_type = self.config.get_alias(schema)
-        mapping = self.client.indices.get_mapping(index=self.index_name,
-                                                  doc_type=doc_type)
-        mapping = generate_mapping(mapping, self.index_name, doc_type, schema,
+        mapping = client.indices.get_mapping(index=index, doc_type=doc_type)
+        mapping = generate_mapping(mapping, index, doc_type, schema,
                                    self.config.resolver)
         try:
-            self.client.indices.put_mapping(index=self.index_name,
-                                            doc_type=doc_type,
-                                            body={doc_type: mapping})
+            client.indices.close(index=index)
+            client.indices.put_settings(SETTINGS, index=index)
+        except Exception as ex:
+            log.warning("Cannot update index settings: %s", ex)
+        client.indices.open(index=index)
+        try:
+            client.indices.put_mapping(index=index, doc_type=doc_type,
+                                       body={doc_type: mapping})
         except Exception as ex:
             log.warning("Cannot update data mapping: %s", ex)
         return doc_type
 
     def index(self):
-        self.client.indices.create(index=self.index_name, ignore=400)
-        log.info('Indexing to: %r (index: %r)',
-                 self.config.get('elastic_host'), self.index_name)
+        client = self.config.elastic_client
+        index = self.config.elastic_index
+        client.indices.create(index=index, ignore=400)
+        log.info('Indexing to: %r (index: %r)', client, index)
         for alias, schema in self.config.schemas.items():
             self.make_doc_type(schema)
-            bulk(self.client, self.generate_entities(schema),
+            bulk(client, self.generate_entities(schema),
                  stats_only=True, chunk_size=self.chunk)
