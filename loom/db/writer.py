@@ -21,7 +21,7 @@ class Writer(object):
         self.rows = 0
         self.create_file()
 
-        self.queue = Queue()
+        self.queue = Queue(maxsize=2)
         self.thread = Thread(target=self.loader_thread)
         self.thread.daemon = True
         self.thread.start()
@@ -51,10 +51,6 @@ class Writer(object):
         cur.copy_expert(q, temp)
         raw_conn.commit()
         cur.close()
-        # import subprocess
-        # subprocess.check_call([
-        #     'psql', self.manager.config.database, '-c', q,
-        # ], stdin=temp)
         duration = (time() - begin)
         log.info("COPY done after %.2fs", duration)
         temp.close()

@@ -128,4 +128,5 @@ class Indexer(object):
         for alias, schema in self.config.schemas.items():
             self.make_doc_type(schema)
             bulk(client, self.generate_entities(schema),
-                 stats_only=True, chunk_size=self.chunk)
+                 stats_only=True, chunk_size=self.chunk,
+                 request_timeout=60.0)
