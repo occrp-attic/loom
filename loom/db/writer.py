@@ -32,16 +32,16 @@ class Writer(object):
 
     def loader_thread(self):
         while True:
-            temp = self.queue.get()
-            self.bulk_load(temp)
+            rows, temp = self.queue.get()
+            self.bulk_load(rows, temp)
             self.queue.task_done()
 
-    def bulk_load(self, temp):
+    def bulk_load(self, rows, temp):
         temp.flush()
         temp.seek(0)
         begin = time()
         raw_conn = self.engine.raw_connection()
-        log.info("Bulk loading into %r (ca. %s)", self.manager.name, self.rows)
+        log.info("Bulk loading into %r (ca. %s)", self.manager.name, rows)
         cur = raw_conn.cursor()
         q = """
             COPY %s (%s) FROM STDIN
@@ -56,12 +56,12 @@ class Writer(object):
         temp.close()
 
     def flush(self):
-        self.queue.put(self.temp)
+        self.queue.put((int(self.rows), self.temp))
         self.queue.join()
 
     def write(self, record):
         self.writer.writerow(record)
         self.rows += 1
         if self.rows > 0 and self.rows % 500000 == 0:
-            self.queue.put(self.temp)
+            self.queue.put((int(self.rows), self.temp))
             self.create_file()

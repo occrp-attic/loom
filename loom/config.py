@@ -8,6 +8,7 @@ from jsonschema import RefResolver
 from elasticsearch import Elasticsearch
 
 from loom.db import get_entities_manager, get_properties_manager
+from loom.db import get_sources_manager
 from loom.util import ConfigException, EnvMapping
 
 log = logging.getLogger(__name__)
@@ -59,6 +60,13 @@ class Config(EnvMapping):
             self._properties = get_properties_manager(self)
             self._properties.create()
         return self._properties
+
+    @property
+    def sources(self):
+        if not hasattr(self, '_sources'):
+            self._sources = get_sources_manager(self)
+            self._sources.create()
+        return self._sources
 
     @property
     def base_uri(self):

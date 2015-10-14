@@ -27,6 +27,20 @@ def cli(ctx, debug):
     logging.getLogger('elasticsearch').setLevel(logging.WARNING)
 
 
+@cli.command('init')
+@click.argument('config_file', type=click.Path(exists=True))
+@click.pass_context
+def init(ctx, config_file):
+    """ Register a source from a configuration file with the loom DB. """
+    try:
+        config = load_config(config_file)
+        config = Config(config, path=config_file)
+        log.info("Registering source: %r", config.source)
+        config.sources.upsert(config.get('source', {}))
+    except LoomException as le:
+        raise click.ClickException(le.message)
+
+
 @cli.command('map')
 @click.argument('config_file', type=click.Path(exists=True))
 @click.pass_context

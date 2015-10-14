@@ -24,3 +24,13 @@ def get_entities_manager(config):
     indexes = [('schema', 'source'), ('schema',), ('source',)]
     unique = ('subject', 'source')
     return TableManager(config, 'entity', columns, indexes, unique)
+
+
+def get_sources_manager(config):
+    columns = (Column('id', BigInteger, primary_key=True),
+               Column('slug', Unicode(1024)),
+               Column('title', Unicode()),
+               Column('url', Unicode()))
+    indexes = [('slug',)]
+    unique = ('slug',)
+    return TableManager(config, 'source', columns, indexes, unique)

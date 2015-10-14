@@ -1,5 +1,6 @@
 import logging
 
+from sqlalchemy import and_, select, func
 from sqlalchemy.schema import Table, Index
 from sqlalchemy.schema import MetaData
 
@@ -53,6 +54,17 @@ class TableManager(object):
     def writer(self):
         return Writer(self)
 
+    def upsert(self, record):
+        """ Check if a given record exists, otherwise insert it. """
+        wc = [self.table.columns[u] == record.get(u) for u in self.unique]
+        wc = and_(*wc)
+        q = select([func.count(self.table.columns.id)]).where(wc)
+        if self.bind.execute(q).scalar() > 0:
+            q = self.table.update().where(wc).values(record)
+        else:
+            q = self.table.insert(record)
+        self.bind.execute(q)
+
     def delete(self, source):
         log.info("Deleting existing %r data: %r", self.name, source)
         q = self.table.delete()
@@ -62,19 +74,18 @@ class TableManager(object):
         conn.execute(q)
         tx.commit()
 
-    def dedupe(self, source):
-        log.info("De-duplicating table: %r (source = %r)", self.name, source)
+    def dedupe(self):
+        log.info("De-duplicating table: %r", self.name)
         args = {
             'name': self.name,
-            'source': source,
             'unique': ', '.join(self.unique)
         }
         dedupe_q = """
-            DELETE FROM %(name)s WHERE source = '%(source)s' AND id IN (
+            DELETE FROM %(name)s WHERE id IN (
                 SELECT id FROM (
                     SELECT id, ROW_NUMBER() OVER (partition BY %(unique)s
                     ORDER BY id) AS rnum
-                FROM %(name)s WHERE source = '%(source)s') t
+                FROM %(name)s) t
                 WHERE t.rnum > 1);
         """ % args
         conn = self.bind.connect()
