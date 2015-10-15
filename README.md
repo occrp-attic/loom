@@ -5,6 +5,9 @@ to a common data model, defined through [JSON Schema](http://json-schema.org/).
 Once data has been modeled into such objects, it is stored as a set of
 statements in a SQL database and eventually indexed in ElasticSearch.
 
+``loom`` is the backend component for [spindle](https://github.com/occrp/spindle),
+a web-based graph data browser/editor tool that uses the same data model.
+
 ## Design
 
 The design goal of ``loom`` is to accept data from many different sources and
