@@ -10,32 +10,29 @@ BASE_MAPPING = {
         "$text": {"type": "string", "index": "analyzed"},
         "$linkcount": {"type": "integer", "index": "not_analyzed"},
         "$attrcount": {"type": "integer", "index": "not_analyzed"},
-        "$latin": {
-            "type": "string",
-            "analyzer": "latin"
-        },
+        "$latin": {"type": "string", "index": "analyzed"},
         "$indexed_at": {"type": "date", "index": "not_analyzed"}
     }
 }
 
-SETTINGS = {
-    "index": {
-        "analysis": {
-            "analyzer": {
-                "latin": {
-                    "tokenizer": "icu_tokenizer",
-                    "filter": ["latinize", "lowercase"]
-                }
-            },
-            "filter": {
-                "latinize": {
-                    "type": "icu_transform",
-                    "id": "Any-Latin; NFD; [:Nonspacing Mark:] Remove; NFC; Latin-ASCII"
-                }
-            }
-        }
-    }
-}
+# SETTINGS = {
+#     "index": {
+#         "analysis": {
+#             "analyzer": {
+#                 "latin": {
+#                     "tokenizer": "icu_tokenizer",
+#                     "filter": ["latinize", "lowercase"]
+#                 }
+#             },
+#             "filter": {
+#                 "latinize": {
+#                     "type": "icu_transform",
+#                     "id": "Any-Latin; NFD; [:Nonspacing Mark:] Remove; NFC; Latin-ASCII"
+#                 }
+#             }
+#         }
+#     }
+# }
 
 
 def generate_mapping(mapping, index, doc_type, schema, resolver):

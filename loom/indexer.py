@@ -8,8 +8,9 @@ from sqlalchemy.sql import bindparam
 from elasticsearch import Elasticsearch
 from elasticsearch.helpers import bulk
 
-from loom.util import ConfigException, extract_text, count_attrs
-from loom.elastic import generate_mapping, SETTINGS
+from loom.util import ConfigException
+from loom.analysis import extract_text, count_attrs, latinize
+from loom.elastic import generate_mapping
 from loom.model import Binding, objectify
 
 log = logging.getLogger(__name__)
@@ -25,15 +26,15 @@ class Indexer(object):
     def configure(self):
         client = self.config.elastic_client
         index = self.config.elastic_index
-        log.warning("Configuring index at: %s", client)
+        log.info("Configuring index at: %s", client)
         client.indices.create(index=index, ignore=400)
-        client.cluster.health(wait_for_status='yellow', request_timeout=10)
-        try:
-            client.indices.close(index=index)
-            client.indices.put_settings(SETTINGS, index=index)
-        except Exception as ex:
-            log.warning("Cannot update index settings: %s", ex)
-        client.indices.open(index=index)
+        # client.cluster.health(wait_for_status='yellow', request_timeout=10)
+        # try:
+        #     client.indices.close(index=index)
+        #     client.indices.put_settings(SETTINGS, index=index)
+        # except Exception as ex:
+        #     log.warning("Cannot update index settings: %s", ex)
+        # client.indices.open(index=index)
 
     @property
     def client(self):
@@ -93,7 +94,9 @@ class Indexer(object):
             entity['$attrcount'] = attr_count
             entity['$linkcount'] = link_count
             entity['$text'] = extract_text(entity)
-            entity['$latin'] = entity['$text']  # handled by ICU in ES
+            entity['$latin'] = latinize(entity['$text'])
+
+            pprint(entity)
 
             yield {
                 '_id': entity.get('id'),
