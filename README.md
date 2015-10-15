@@ -129,6 +129,9 @@ complex mappings and transformations on the source data.
 
 ## Installation
 
+Before installing ``loom``, make sure you have both dependencies - PostgreSQL
+and ElasticSearch - installed.
+
 If you wish to use the ``loom`` command line tool, you can install the
 application into a Python [virtual environment](http://docs.python-guide.org/en/latest/dev/virtualenvs/)
 like this:
@@ -152,9 +155,14 @@ steps manually.
 
 ## Usage
 
+A prerequisite for using ``loom`` is that source data needs to be stored in a
+PostgreSQL database. The specific layout of the source data tables is not
+important, since the JSON object mapping will be applied.
+
 After installing ``loom``, a command-line tool is available. You can use the
-``--help`` argument to learn more about it's functioning. A basic sequence of
-commands might look like this:
+``--help`` argument to learn more about it's functioning.
+
+A basic sequence of commands might look like this:
 
 ```bash
 # first, register the metadata with the loom data store:
