@@ -46,3 +46,15 @@ outputs:
                     name:
                         column: fo_companies_director.name
 ```
+
+## Installing
+
+```sh
+$ pip install loom
+```
+
+## Installing for development
+
+```
+$ sudo python setup.py develop
+```
