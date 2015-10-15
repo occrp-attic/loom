@@ -63,35 +63,60 @@ data types, source details and, most importantly, a mapping between source data
 structure and the JSON schema-defined model.
 
 ```yaml
+# Two PostgreSQL databases should be provided. The ODS database is expected to
+# contain the source tables referenced below (fo_companies_director,
+# fo_companies_company), while the loom database can be empty (statement
+# tables will be created automatically). Since loom uses maintenance functions
+# (COPY) to load data, you may need to provide superuser access to the target
+# database.
 ods_database: postgresql://localhost/source_database
 loom_database: postgresql://localhost/statements
 
+# ElasticSearch indexing destination. The index does not need to exist prior to
+# running loom.
+elastic_host: localhost:9200
+elastic_index: graph
+
+# This is the schema registry, which will be used to determine short-hand
+# aliases for specific types. All schemas listed here will be indexed to
+# ElasticSearch.
 schemas:
     company: http://schema.occrp.org/generic/company.json#
 
+# Source metadata, limited to three basic fields for the moment.
 source:
     slug: foo_companies
     title: "Foo Country Company Registry"
     url: http://registry.gov.foo/companies
+
+# Source data tables, and how to join them. Tables can also be assigned an
+# alias to allow for recursive joins (i.e. for parent-child relationships).
 tables:
     - fo_companies_company
     - fo_companies_director
 joins:
     - foo_companies_company.id: fo_companies_director.company_id
+
+# Outputs define the set of queries to be run, alongside with a mapping that
+# is used to translate the resulting records into JSON schema objects:
 outputs:
+    # Every output has a name, which is used only for internal purposes:
     demo:
         schema:
             $ref: http://schema.occrp.org/generic/company.json#
         mapping:
+            # Mapping for a single field in the destination schema:
             name:
                 column: foo_companies_company.name
+                # Some transformations can be applied:
                 transforms:
                     - clean
                     - latinize
             company_id:
-                column: foo_companies_company.id
+                columns: foo_companies_company.id
                 format: 'urn:foo:%s'
             directors:
+                # Nested object, which uses the same mapping method:
                 mapping:
                     name:
                         column: fo_companies_director.name
