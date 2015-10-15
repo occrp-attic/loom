@@ -96,8 +96,6 @@ class Indexer(object):
             entity['$text'] = extract_text(entity)
             entity['$latin'] = latinize(entity['$text'])
 
-            pprint(entity)
-
             yield {
                 '_id': entity.get('id'),
                 '_type': doc_type,
