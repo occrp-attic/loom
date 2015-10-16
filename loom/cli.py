@@ -35,6 +35,7 @@ def init(ctx, config_file):
     try:
         config = load_config(config_file)
         config = Config(config, path=config_file)
+
         log.info("Registering source: %r", config.source)
         config.sources.upsert(config.get('source', {}))
     except LoomException as le:
@@ -49,6 +50,10 @@ def map(ctx, config_file):
     try:
         config = load_config(config_file)
         config = Config(config, path=config_file)
+
+        log.info("Registering source: %r", config.source)
+        config.sources.upsert(config.get('source', {}))
+
         mapper = Mapper(config)
         mapper.map()
     except LoomException as le:
@@ -96,7 +101,6 @@ def dedupe(ctx, config_file):
         config.properties.dedupe(config.source)
     except LoomException as le:
         raise click.ClickException(le.message)
-
 
 
 if __name__ == '__main__':
