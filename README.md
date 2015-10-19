@@ -84,7 +84,7 @@ elastic_index: graph
 # aliases for specific types. All schemas listed here will be indexed to
 # ElasticSearch.
 schemas:
-    company: http://schema.occrp.org/generic/company.json#
+    company: https://schema.occrp.org/generic/company.json#
 
 # Source metadata, limited to three basic fields for the moment.
 source:
@@ -106,7 +106,7 @@ outputs:
     # Every output has a name, which is used only for internal purposes:
     demo:
         schema:
-            $ref: http://schema.occrp.org/generic/company.json#
+            $ref: https://schema.occrp.org/generic/company.json#
         mapping:
             # Mapping for a single field in the destination schema:
             name:
