@@ -52,6 +52,7 @@ class Indexer(object):
         q = select([table.c.subject])
         q = q.where(table.c.schema == schema)
         q = q.where(table.c.source == self.config.source)
+        q = q.distinct()
         log.info('Getting %s by source: %s', schema, self.config.source)
         rp = self.config.engine.execute(q)
         while True:

@@ -97,8 +97,8 @@ def dedupe(ctx, config_file):
     try:
         config = load_config(config_file)
         config = Config(config, path=config_file)
-        config.entities.dedupe(config.source)
-        config.properties.dedupe(config.source)
+        config.entities.dedupe()
+        config.properties.dedupe()
     except LoomException as le:
         raise click.ClickException(le.message)
 

@@ -7,7 +7,7 @@ from util import create_fixtures, FIXTURE_PATH
 
 from loom.config import Config
 from loom.mapper import Mapper
-from loom.generator import SpecException
+from loom.db.generator import SpecException
 
 
 class MapperTestCase(TestCase):
