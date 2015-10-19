@@ -7,11 +7,11 @@ from sqlalchemy.sql.expression import select
 from sqlalchemy.sql import bindparam
 from elasticsearch import Elasticsearch
 from elasticsearch.helpers import bulk
+from jsonmapping import StatementsVisitor
 
 from loom.util import ConfigException
 from loom.analysis import extract_text, count_attrs, latinize
 from loom.elastic import generate_mapping
-from loom.model import Binding, objectify
 
 log = logging.getLogger(__name__)
 
@@ -26,15 +26,7 @@ class Indexer(object):
     def configure(self):
         client = self.config.elastic_client
         index = self.config.elastic_index
-        log.info("Configuring index at: %s", client)
         client.indices.create(index=index, ignore=400)
-        # client.cluster.health(wait_for_status='yellow', request_timeout=10)
-        # try:
-        #     client.indices.close(index=index)
-        #     client.indices.put_settings(SETTINGS, index=index)
-        # except Exception as ex:
-        #     log.warning("Cannot update index settings: %s", ex)
-        # client.indices.open(index=index)
 
     @property
     def client(self):
@@ -84,10 +76,10 @@ class Indexer(object):
     def generate_entities(self, schema_uri):
         begin = time()
         _, schema = self.config.resolver.resolve(schema_uri)
-        binding = Binding(schema, self.config.resolver)
+        statements = StatementsVisitor(schema, self.config.resolver)
         doc_type = self.config.get_alias(schema_uri)
         for i, subject in enumerate(self.generate_subjects(schema=schema_uri)):
-            entity = objectify(self.properties_of, subject, binding, 4, set())
+            entity = statements.objectify(self.properties_of, subject, 3)
 
             # extend the object to index form
             attr_count, link_count = count_attrs(entity)
@@ -95,6 +87,7 @@ class Indexer(object):
             entity['$linkcount'] = link_count
             entity['$text'] = extract_text(entity)
             entity['$latin'] = latinize(entity['$text'])
+            # pprint(entity)
 
             yield {
                 '_id': entity.get('id'),

@@ -1,7 +1,6 @@
 import six
 import os
 import yaml
-from uuid import uuid4
 from collections import MutableMapping, Mapping
 
 
@@ -15,11 +14,6 @@ class SpecException(LoomException):
 
 class ConfigException(LoomException):
     pass
-
-
-def make_id():
-    """ Generate a URN uuid. """
-    return uuid4().urn
 
 
 def load_config(config_file):

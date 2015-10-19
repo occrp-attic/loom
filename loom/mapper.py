@@ -2,8 +2,7 @@ import time
 import logging
 
 from jsonmapping import Mapper as SchemaMapper
-
-from loom.model import triplify, Binding, TYPE_TYPE
+from jsonmapping import StatementsVisitor, TYPE_SCHEMA
 from loom.db.generator import Generator
 
 log = logging.getLogger(__name__)
@@ -19,13 +18,14 @@ class Mapper(object):
     def records(self, mapping_name):
         mapper = SchemaMapper(self.config.get_mapping(mapping_name),
                               self.config.resolver, scope=self.config.base_uri)
-        binding = Binding(mapper.visitor.schema, self.config.resolver,
-                          scope=self.config.base_uri)
+        statements = StatementsVisitor(mapper.visitor.schema,
+                                       self.config.resolver,
+                                       scope=self.config.base_uri)
         begin = time.time()
         stmts = 0
         for i, row in enumerate(self.generator.generate(mapping_name)):
             _, data = mapper.apply(row)
-            for stmt in triplify(binding, data, None):
+            for stmt in statements.triplify(data):
                 stmts += 1
                 yield stmt
 
@@ -41,7 +41,7 @@ class Mapper(object):
         entities = self.config.entities.writer()
         properties = self.config.properties.writer()
         for i, (s, p, o, t) in enumerate(self.records(mapping)):
-            if p == TYPE_TYPE:
+            if p == TYPE_SCHEMA:
                 entities.write({
                     'subject': s,
                     'schema': o,
