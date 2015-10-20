@@ -28,7 +28,8 @@ class TableManager(object):
         fields known for this table. """
         if not hasattr(self, '_table'):
             bind = self.bind.connect()
-            bind.connection.connection.set_isolation_level(0)
+            if hasattr(bind.connection.connection, 'set_isolation_level'):
+                bind.connection.connection.set_isolation_level(0)
             if self.bind.has_table(self.name):
                 self._table = Table(self.name, self.meta, autoload=True)
             else:

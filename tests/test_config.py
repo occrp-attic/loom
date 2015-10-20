@@ -17,6 +17,7 @@ class ConfigTestCase(TestCase):
             config = yaml.load(fh)
         self.config = Config(config)
         self.config._engine = self.engine
+        self.config._ods = self.engine
         self.gen = Generator(self.config)
 
     def tearDown(self):

@@ -7,7 +7,7 @@ from util import create_fixtures, FIXTURE_PATH
 
 from loom.config import Config
 from loom.mapper import Mapper
-from loom.db.generator import SpecException
+from loom.util import SpecException, ConfigException
 
 
 class MapperTestCase(TestCase):
@@ -18,6 +18,7 @@ class MapperTestCase(TestCase):
             config = yaml.load(fh)
         self.config = Config(config)
         self.config._engine = self.engine
+        self.config._ods = self.engine
         self.mapper = Mapper(self.config)
         self.gen = self.mapper.generator
 
@@ -40,14 +41,19 @@ class MapperTestCase(TestCase):
     def test_unaliased_table(self):
         self.gen.get_column('financials.value')
 
-    @raises(SpecException)
+    @raises(ConfigException)
     def test_invalid_output(self):
         for x in self.gen.generate('knuffels'):
             pass
 
-    def test_generate_mapping(self):
-        comps = [e for (s, e) in self.gen.generate('companies')]
-        assert 'id' in comps[0], comps[0]
-        assert 'sector' not in comps[0], comps[0]
-        assert isinstance(comps[0]['financials']['price'], float), comps[0]
+    def test_generate_records(self):
+        comps = [e for e in self.gen.generate('companies')]
+        assert 'companies.symbol' in comps[0], comps[0]
+        assert 'fin' not in comps[0], comps[0]
         assert len(comps) == 496, len(comps)
+
+    def test_mapping(self):
+        for stmt in self.mapper.records('companies'):
+            assert 'companies.symbol' not in stmt
+            (s, p, o, t) = stmt
+            assert s is not None
