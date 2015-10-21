@@ -52,15 +52,18 @@ class Indexer(object):
         q = select([table.c.subject])
         q = q.where(table.c.schema == schema)
         q = q.where(table.c.source == self.config.source)
-        # q = q.distinct()
+        q = q.order_by(table.c.subject)
         log.info('Getting %s by source: %s', schema, self.config.source)
         rp = self.config.engine.execute(q)
+        prev = None
         while True:
             rows = rp.fetchmany(self.chunk)
             if not len(rows):
                 return
             for row in rows:
-                yield row.subject
+                if row.subject != prev:
+                    yield row.subject
+                    prev = row.subject
 
     def properties_of(self, subject):
         if not hasattr(self, '_pq'):
@@ -70,9 +73,9 @@ class Indexer(object):
             self._pq = q.compile(self.config.engine)
 
         rp = self.config.engine.execute(self._pq, subject=subject)
-        for row in rp.fetchall():
-            # TODO: do we need type casting here?
-            yield row.predicate, row.object, row.source
+        rows = rp.fetchall()
+        rows = [(row.predicate, row.object, row.source) for row in rows]
+        return set(rows)
 
     def generate_entities(self, schema_uri):
         begin = time()
