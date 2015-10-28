@@ -25,13 +25,13 @@ class Config(EnvMapping):
 
     @property
     def engine(self):
-        if not self.get('_engine'):
+        if not hasattr(self, '_engine'):
             uri = self.get('database')
             if uri is None:
                 raise ConfigException("No statement database URI configured!")
             log.debug("Loom database: %r", uri)
-            self['_engine'] = create_engine(uri)
-        return self['_engine']
+            self._engine = create_engine(uri)
+        return self._engine
 
     @property
     def entities(self):

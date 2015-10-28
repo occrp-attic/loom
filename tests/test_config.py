@@ -6,6 +6,7 @@ from unittest import TestCase
 from util import create_fixtures, FIXTURE_PATH
 
 from loom.config import Config, ConfigException
+from loom.spec import Spec
 from loom.db.generator import Generator
 
 
@@ -13,12 +14,13 @@ class ConfigTestCase(TestCase):
 
     def setUp(self):
         self.engine = create_fixtures()
-        with open(os.path.join(FIXTURE_PATH, 'spec.yaml'), 'r') as fh:
-            config = yaml.load(fh)
-        self.config = Config(config)
+        self.config = Config({})
         self.config._engine = self.engine
-        self.config._ods = self.engine
-        self.gen = Generator(self.config)
+        with open(os.path.join(FIXTURE_PATH, 'spec.yaml'), 'r') as fh:
+            spec = yaml.load(fh)
+        self.spec = Spec(self.config, spec)
+        self.spec._engine = self.engine
+        self.gen = Generator(self.spec)
 
     def tearDown(self):
         pass
