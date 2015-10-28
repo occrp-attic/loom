@@ -9,7 +9,6 @@ from elasticsearch import Elasticsearch
 from elasticsearch.helpers import bulk
 from jsonmapping import StatementsVisitor
 
-from loom.util import ConfigException
 from loom.analysis import extract_text, count_attrs, latinize
 from loom.elastic import generate_mapping
 
@@ -22,38 +21,24 @@ class Indexer(object):
     def __init__(self, config):
         self.config = config
         self.chunk = int(config.get('chunk') or 1000)
+        self.configure()
 
     def configure(self):
-        client = self.config.elastic_client
-        index = self.config.elastic_index
-        client.indices.create(index=index, ignore=400)
+        self.config.elastic_client.indices.create(ignore=400,
+            index=self.config.elastic_index)  # noqa
 
-    @property
-    def client(self):
-        if not hasattr(self, '_client'):
-            host = self.config.get('elastic_host')
-            if host is None:
-                raise ConfigException("No 'elastic_host' is configured.")
-            self._client = Elasticsearch([host])
-        return self._client
-
-    @property
-    def index_name(self):
-        if not hasattr(self, '_index_name'):
-            self._index_name = self.config.get('elastic_index')
-            if self._index_name is None:
-                raise ConfigException("No 'elastic_index' is configured.")
-        return self._index_name
-
-    def generate_subjects(self, schema):
+    def generate_subjects(self, schema, source=None):
         """ Iterate over all entity IDs which match the current set of
         constraints (i.e. a specific schema or source dataset). """
         table = self.config.entities.table
         q = select([table.c.subject])
         q = q.where(table.c.schema == schema)
-        q = q.where(table.c.source == self.config.source)
+        if source is not None:
+            q = q.where(table.c.source == source)
+            log.info('Getting %s by source: %s', schema, source)
+        else:
+            log.info('Getting %s from all sources', schema)
         q = q.order_by(table.c.subject)
-        log.info('Getting %s by source: %s', schema, self.config.source)
         rp = self.config.engine.execute(q)
         prev = None
         while True:
@@ -77,13 +62,14 @@ class Indexer(object):
         rows = [(row.predicate, row.object, row.source) for row in rows]
         return set(rows)
 
-    def generate_entities(self, schema_uri):
+    def generate_entities(self, schema, source):
         begin = time()
-        _, schema = self.config.resolver.resolve(schema_uri)
-        statements = StatementsVisitor(schema, self.config.resolver)
-        doc_type = self.config.get_alias(schema_uri)
-        for i, subject in enumerate(self.generate_subjects(schema=schema_uri)):
-            entity = statements.objectify(self.properties_of, subject, 3)
+        _, schema_data = self.config.resolver.resolve(schema)
+        statements = StatementsVisitor(schema_data, self.config.resolver)
+        doc_type = self.config.get_alias(schema)
+        for i, subject in enumerate(self.generate_subjects(schema, source)):
+            entity = statements.objectify(self.properties_of, subject)
+            # pprint(entity)
 
             # extend the object to index form
             attr_count, link_count = count_attrs(entity)
@@ -103,7 +89,7 @@ class Indexer(object):
                 elapsed = time() - begin
                 per_rec = (elapsed / float(i)) * 1000
                 log.info("Indexing %r: %s records (%.2fms/r)",
-                         schema_uri, i, per_rec)
+                         doc_type, i, per_rec)
 
     def make_doc_type(self, schema):
         client = self.config.elastic_client
@@ -119,12 +105,13 @@ class Indexer(object):
             log.warning("Cannot update data mapping: %s", ex)
         return doc_type
 
-    def index(self):
+    def index(self, schema, source):
         client = self.config.elastic_client
-        log.info('Indexing to: %r (index: %r)', client,
-                 self.config.elastic_index)
-        for alias, schema in self.config.schemas.items():
+        log.debug('Indexing to: %r (index: %r)', client,
+                  self.config.elastic_index)
+        schemas = self.config.schemas.values() if schema is None else [schema]
+        for schema in schemas:
             self.make_doc_type(schema)
-            bulk(client, self.generate_entities(schema),
+            bulk(client, self.generate_entities(schema, source),
                  stats_only=True, chunk_size=self.chunk,
                  request_timeout=60.0)

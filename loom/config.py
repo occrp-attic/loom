@@ -16,7 +16,7 @@ log = logging.getLogger(__name__)
 
 class Config(EnvMapping):
     """ Parsing a configuration file. This specifies the database connection
-    and the settings for each data sink. """
+    and the settings the data sink. """
 
     def __init__(self, data, path=None):
         self.path = path or os.getcwd()
@@ -24,28 +24,14 @@ class Config(EnvMapping):
         super(Config, self).__init__(data)
 
     @property
-    def source(self):
-        return unicode(self.get('source', {}).get('slug'))
-
-    @property
-    def ods(self):
-        if not hasattr(self, '_ods'):
-            uri = self.get('ods_database')
-            if uri is None:
-                raise ConfigException("No source database URI configured!")
-            log.info("Source database: %r", uri)
-            self._ods = create_engine(uri)
-        return self._ods
-
-    @property
     def engine(self):
-        if not hasattr(self, '_engine'):
-            uri = self.get('loom_database')
+        if not self.get('_engine'):
+            uri = self.get('database')
             if uri is None:
                 raise ConfigException("No statement database URI configured!")
-            log.info("Loom database: %r", uri)
-            self._engine = create_engine(uri)
-        return self._engine
+            log.debug("Loom database: %r", uri)
+            self['_engine'] = create_engine(uri)
+        return self['_engine']
 
     @property
     def entities(self):
@@ -72,17 +58,6 @@ class Config(EnvMapping):
     def base_uri(self):
         uri = 'file://' + os.path.abspath(self.path)
         return self.get('base_uri', uri)
-
-    @property
-    def mappings(self):
-        return self.get('mappings', {}).keys()
-
-    def get_mapping(self, name):
-        mapping = self.get('mappings', {}).get(name, raw=True)
-        if mapping is None:
-            raise ConfigException("No such mapping: %r", name)
-        self.add_schema(mapping['schema'])
-        return mapping
 
     @property
     def elastic_client(self):

@@ -4,6 +4,7 @@ import click
 
 from loom.util import LoomException, load_config
 from loom.config import Config
+from loom.spec import Spec
 from loom.mapper import Mapper
 from loom.indexer import Indexer
 
@@ -13,11 +14,17 @@ log = logging.getLogger(__name__)
 @click.group()
 @click.option('--debug/--no-debug', default=False,
               help='Show log messages.')
+@click.option('config_file', '--config', '-c', envvar='LOOM_CONFIG',
+              required=True, type=click.Path(),
+              help='Configuration file.')
 @click.pass_context
-def cli(ctx, debug):
+def cli(ctx, debug, config_file):
     """ Map data from a SQL database into a statement-based graph. """
     ctx.obj = ctx.obj or {}
     ctx.obj['DEBUG'] = debug
+
+    config = load_config(config_file)
+    ctx.obj['CONFIG'] = Config(config, path=config_file)
 
     fmt = '[%(levelname)-8s] %(name)-12s: %(message)s'
     level = logging.DEBUG if debug else logging.INFO
@@ -27,76 +34,66 @@ def cli(ctx, debug):
     logging.getLogger('elasticsearch').setLevel(logging.WARNING)
 
 
-@cli.command('init')
-@click.argument('config_file', type=click.Path(exists=True))
-@click.pass_context
-def init(ctx, config_file):
-    """ Register a source from a configuration file with the loom DB. """
-    try:
-        config = load_config(config_file)
-        config = Config(config, path=config_file)
-
-        log.info("Registering source: %r", config.source)
-        config.sources.upsert(config.get('source', {}))
-    except LoomException as le:
-        raise click.ClickException(le.message)
-
-
 @cli.command('map')
-@click.argument('config_file', type=click.Path(exists=True))
+@click.argument('spec_file', type=click.Path(exists=True))
 @click.pass_context
-def map(ctx, config_file):
+def map(ctx, spec_file):
     """ Map data from the database into modeled objects. """
     try:
-        config = load_config(config_file)
-        config = Config(config, path=config_file)
+        config = ctx.obj['CONFIG']
+        spec = load_config(spec_file)
+        spec = Spec(config, spec, path=spec_file)
 
-        log.info("Registering source: %r", config.source)
-        config.sources.upsert(config.get('source', {}))
+        log.info("Registering source: %r", spec.source)
+        config.sources.upsert(spec.get('source', {}))
 
-        mapper = Mapper(config)
+        mapper = Mapper(config, spec)
         mapper.map()
     except LoomException as le:
         raise click.ClickException(le.message)
 
 
 @cli.command('index')
-@click.argument('config_file', type=click.Path(exists=True))
+@click.option('schema', '-t', '--schema', default=None,
+              help='Index only entities of the given type')
+@click.option('source', '-s', '--source', default=None,
+              help='Index only entities from the given source')
 @click.pass_context
-def index(ctx, config_file):
+def index(ctx, schema, source):
     """ Index modeled objects to ElasticSearch. """
     try:
-        config = load_config(config_file)
-        config = Config(config, path=config_file)
+        config = ctx.obj['CONFIG']
         indexer = Indexer(config)
-        indexer.configure()
-        indexer.index()
+        indexer.index(schema=schema, source=source)
     except LoomException as le:
         raise click.ClickException(le.message)
 
 
 @cli.command('flush')
-@click.argument('config_file', type=click.Path(exists=True))
+@click.option('source', '-s', '--source', default=None,
+              help='Delete only entities from the given source')
+@click.option('flush_all', '-a', '--all', default=False,
+              help='Delete all entities')
 @click.pass_context
-def flush(ctx, config_file):
+def flush(ctx, source, flush_all):
     """ Clear all statements about a source from the statement DB. """
     try:
-        config = load_config(config_file)
-        config = Config(config, path=config_file)
-        config.entities.delete(config.source)
-        config.properties.delete(config.source)
+        if source is None and not flush_all:
+            msg = "Either specify a --source or pass --all"
+            raise click.ClickException(msg)
+        config = ctx.obj['CONFIG']
+        config.entities.delete(source)
+        config.properties.delete(source)
     except LoomException as le:
         raise click.ClickException(le.message)
 
 
 @cli.command('dedupe')
-@click.argument('config_file', type=click.Path(exists=True))
 @click.pass_context
-def dedupe(ctx, config_file):
+def dedupe(ctx):
     """ De-duplicate statements inside the statement DB. """
     try:
-        config = load_config(config_file)
-        config = Config(config, path=config_file)
+        config = ctx.obj['CONFIG']
         config.entities.dedupe()
         config.properties.dedupe()
     except LoomException as le:

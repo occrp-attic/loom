@@ -13,16 +13,16 @@ class Generator(object):
     """ Apply a mapping specification to generate JSON schema data from a
     SQL database using field mappings. """
 
-    def __init__(self, config):
-        self.config = config
+    def __init__(self, spec):
+        self.spec = spec
         self.metadata = MetaData()
-        self.metadata.bind = self.config.ods
+        self.metadata.bind = self.spec.engine
 
     @property
     def tables(self):
         if not hasattr(self, '_tables'):
             self._tables = []
-            for table_obj in self.config.get('tables', []):
+            for table_obj in self.spec.get('tables', []):
                 table_name, table_alias = table_obj, None
                 if isinstance(table_obj, Mapping):
                     table_name = table_obj.get('table')
@@ -39,7 +39,7 @@ class Generator(object):
     def joins(self):
         if not hasattr(self, '_joins'):
             self._joins = []
-            for join in self.config.get('joins', {}):
+            for join in self.spec.get('joins', {}):
                 for left, right in join.items():
                     self._joins.append((self.get_column(left),
                                         self.get_column(right)))
@@ -92,7 +92,7 @@ class Generator(object):
         log.info("Query: %s", q)
         # TODO: see if this scales (i.e. the cursor loads data progressively)
         # else introduce pagination and sorting.
-        rp = self.config.ods.execute(q)
+        rp = self.spec.engine.execute(q)
         while True:
             rows = rp.fetchmany(10000)
             if not len(rows):
@@ -102,7 +102,7 @@ class Generator(object):
 
     def generate(self, mapping_name):
         """ Generate all the items produced by the given mapping. """
-        mapping = self.config.get_mapping(mapping_name)
+        mapping = self.spec.get_mapping(mapping_name)
         columns = set(self.get_column(c) for c in self._scan_columns(mapping))
         tables = set([c.table for c in columns])
 

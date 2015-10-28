@@ -20,13 +20,7 @@ def load_config(config_file):
     """ Loads the configuration file and recursively imports any base
     configurations indicated in the configuration. """
     with open(config_file, 'r') as fh:
-        config = yaml.load(fh)
-    if 'base' not in config:
-        return config
-    base_file = os.path.expandvars(config.pop('base'))
-    base_config = load_config(base_file)
-    base_config.update(config)
-    return base_config
+        return yaml.load(fh)
 
 
 class EnvMapping(MutableMapping):

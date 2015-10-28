@@ -11,12 +11,13 @@ log = logging.getLogger(__name__)
 class Mapper(object):
     """ Map generated records to the data model. """
 
-    def __init__(self, config):
+    def __init__(self, config, spec):
         self.config = config
-        self.generator = Generator(config)
+        self.spec = spec
+        self.generator = Generator(spec)
 
     def records(self, mapping_name):
-        mapper = SchemaMapper(self.config.get_mapping(mapping_name),
+        mapper = SchemaMapper(self.spec.get_mapping(mapping_name),
                               self.config.resolver, scope=self.config.base_uri)
         statements = StatementsVisitor(mapper.visitor.schema,
                                        self.config.resolver,
@@ -45,7 +46,7 @@ class Mapper(object):
                 entities.write({
                     'subject': s,
                     'schema': o,
-                    'source': self.config.source
+                    'source': self.spec.source
                 })
             else:
                 properties.write({
@@ -53,12 +54,12 @@ class Mapper(object):
                     'predicate': p,
                     'object': o,
                     'type': t,
-                    'source': self.config.source
+                    'source': self.spec.source
                 })
 
         properties.flush()
         entities.flush()
 
     def map(self):
-        for mapping in self.config.mappings:
+        for mapping in self.spec.mappings:
             self.map_mapping(mapping)

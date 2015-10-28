@@ -47,7 +47,7 @@ class TableManager(object):
             index = '_'.join([self.name] + list(columns) + ['idx'])
             if index in existing:
                 continue
-            log.info("Adding concurrent index %r: %r", self.name, columns)
+            log.debug("Adding concurrent index %r: %r", self.name, columns)
             columns = [table.c[c] for c in columns]
             index = Index(index, *columns, postgresql_concurrently=True)
             index.create(bind=bind)
@@ -66,10 +66,13 @@ class TableManager(object):
             q = self.table.insert(record)
         self.bind.execute(q)
 
-    def delete(self, source):
-        log.info("Deleting existing %r data: %r", self.name, source)
+    def delete(self, source=None):
         q = self.table.delete()
-        q = q.where(self.table.c.source == source)
+        if source is not None:
+            log.info("Deleting existing %r data from %r", self.name, source)
+            q = q.where(self.table.c.source == source)
+        else:
+            log.info("Deleting all existing %r data", self.name)
         conn = self.bind.connect()
         tx = conn.begin()
         conn.execute(q)
@@ -97,7 +100,7 @@ class TableManager(object):
     def create(self):
         """ Create the table if it does not exist. """
         if self.exists:
-            log.info('Ensuring table: %r', self.table.name)
+            log.debug('Ensuring table: %r', self.table.name)
 
     def drop(self):
         """ Drop the table if it does exist. """
