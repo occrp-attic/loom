@@ -31,15 +31,15 @@ setup(
         'elasticsearch',
         'pyyaml',
         'psycopg2',
+        'unicodecsv',
         'click',
-        'six'
+        'six',
+        'normality'
     ],
     tests_require=[
         'nose',
         'coverage',
-        'unicodecsv',
         'dataset',
-        'normality'
     ],
     entry_points={
         'console_scripts': [
