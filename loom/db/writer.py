@@ -56,12 +56,16 @@ class Writer(object):
         temp.close()
 
     def flush(self):
-        self.queue.put((int(self.rows), self.temp))
-        self.queue.join()
+        if self.manager.is_postgresql:
+            self.queue.put((int(self.rows), self.temp))
+            self.queue.join()
 
     def write(self, record):
-        self.writer.writerow(record)
         self.rows += 1
-        if self.rows > 0 and self.rows % 500000 == 0:
-            self.queue.put((int(self.rows), self.temp))
-            self.create_file()
+        if self.manager.is_postgresql:
+            self.writer.writerow(record)
+            if self.rows > 0 and self.rows % 500000 == 0:
+                self.queue.put((int(self.rows), self.temp))
+                self.create_file()
+        else:
+            self.manager.insert_many([record])

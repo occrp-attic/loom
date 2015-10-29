@@ -22,6 +22,13 @@ class TableManager(object):
         self.indexes = indexes
         self.unique = unique
 
+        if not self.bind.has_table(self.name):
+            log.debug('Ensuring table: %r', self.table.name)
+
+    @property
+    def is_postgresql(self):
+        return 'postgres' in self.bind.dialect.name
+
     @property
     def table(self):
         """ Generate an appropriate table representation to mirror the
@@ -55,6 +62,12 @@ class TableManager(object):
     def writer(self):
         return Writer(self)
 
+    def insert_many(self, rows, bind=None):
+        """ Insert a bunch of rows into the table. """
+        conn = bind or self.bind.connect()
+        stmt = self.table.insert()
+        conn.execute(stmt, rows)
+
     def upsert(self, record):
         """ Check if a given record exists, otherwise insert it. """
         wc = [self.table.columns[u] == record.get(u) for u in self.unique]
@@ -66,19 +79,19 @@ class TableManager(object):
             q = self.table.insert(record)
         self.bind.execute(q)
 
-    def delete(self, source=None):
+    def delete(self, **kwargs):
         q = self.table.delete()
-        if source is not None:
-            log.info("Deleting existing %r data from %r", self.name, source)
-            q = q.where(self.table.c.source == source)
-        else:
-            log.info("Deleting all existing %r data", self.name)
+        for column, value in kwargs.items():
+            q = q.where(self.table.c[column] == value)
         conn = self.bind.connect()
         tx = conn.begin()
         conn.execute(q)
         tx.commit()
 
     def dedupe(self):
+        # Requires window functions.
+        if not self.is_postgresql:
+            return
         log.info("De-duplicating table: %r", self.name)
         args = {
             'name': self.name,
@@ -97,20 +110,9 @@ class TableManager(object):
         conn.execute(dedupe_q)
         tx.commit()
 
-    def create(self):
-        """ Create the table if it does not exist. """
-        if self.exists:
-            log.debug('Ensuring table: %r', self.table.name)
-
-    def drop(self):
-        """ Drop the table if it does exist. """
-        if self.exists:
-            self.table.drop()
-        self._table = None
-
-    @property
-    def exists(self):
-        return self.bind.has_table(self.table.name)
+    def __len__(self):
+        rp = self.bind.connect().execute(self.table.select().count())
+        return rp.scalar()
 
     def __repr__(self):
         return "<TableManager(%r)>" % (self.name)

@@ -60,20 +60,22 @@ imported into a triple store and queried there.
 
 ## Configuration
 
-All of ``loom`` is controlled via a configuration file which defines the source
-and target databases for data mapping, how to query the source data, available
-data types, source details and, most importantly, a mapping between source data
-structure and the JSON schema-defined model.
+All of ``loom`` is controlled via two types of configuration files: a core
+configuration (which sets the destination database, available data types, and
+the search index), and a set of source specifications (``spec.yaml``, which
+define the source database for data mapping, how to query the source data,
+source details and, most importantly, a mapping between source data
+structure and the JSON schema-defined model).
+
+An example core configuration (passed in via the ``--config`` argument) would
+look like this:
 
 ```yaml
-# Two PostgreSQL databases should be provided. The ODS database is expected to
-# contain the source tables referenced below (fo_companies_director,
-# fo_companies_company), while the loom database can be empty (statement
+# A PostgreSQL databases should be provided. It can be empty (statement
 # tables will be created automatically). Since loom uses maintenance functions
 # (COPY) to load data, you may need to provide superuser access to the target
 # database.
-ods_database: postgresql://localhost/source_database
-loom_database: postgresql://localhost/statements
+database: postgresql://localhost/statements
 
 # ElasticSearch indexing destination. The index does not need to exist prior to
 # running loom.
@@ -85,6 +87,14 @@ elastic_index: graph
 # ElasticSearch.
 schemas:
     company: https://schema.occrp.org/generic/company.json#
+```
+
+After setting these base parameters, a data source can be specified like this:
+
+```yaml
+# The ODS database is expected to contain the source tables referenced below
+# (fo_companies_director, fo_companies_company).
+database: postgresql://localhost/source_database
 
 # Source metadata, limited to three basic fields for the moment.
 source:
@@ -168,14 +178,12 @@ After installing ``loom``, a command-line tool is available. You can use the
 A basic sequence of commands might look like this:
 
 ```bash
-# first, register the metadata with the loom data store:
-$ loom init my_spec.yaml
 # translate the source data records into the loom data store as statements:
-$ loom map my_spec.yaml
+$ loom -c config.yaml map spec.yaml
 # index the statements into ElasticSearch:
-$ loom index my_spec.yaml
+$ loom -c config.yaml index --source foo_companies
 # delete statements from the data store:
-$ loom flush my_spec.yaml
+$ loom -c config.yaml flush --source foo_companies
 ```
 
 ## Similar work and references

@@ -82,7 +82,7 @@ def flush(ctx, source, flush_all):
             msg = "Either specify a --source or pass --all"
             raise click.ClickException(msg)
         config = ctx.obj['CONFIG']
-        config.entities.delete(source)
+        config.types.delete(source)
         config.properties.delete(source)
     except LoomException as le:
         raise click.ClickException(le.message)
@@ -94,7 +94,7 @@ def dedupe(ctx):
     """ De-duplicate statements inside the statement DB. """
     try:
         config = ctx.obj['CONFIG']
-        config.entities.dedupe()
+        config.types.dedupe()
         config.properties.dedupe()
     except LoomException as le:
         raise click.ClickException(le.message)

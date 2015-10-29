@@ -1,5 +1,4 @@
 import os
-import yaml
 from nose.tools import raises
 from unittest import TestCase
 
@@ -7,6 +6,7 @@ from util import create_fixtures, FIXTURE_PATH
 
 from loom.config import Config, ConfigException
 from loom.spec import Spec
+from loom.util import load_config
 from loom.db.generator import Generator
 
 
@@ -16,8 +16,7 @@ class ConfigTestCase(TestCase):
         self.engine = create_fixtures()
         self.config = Config({})
         self.config._engine = self.engine
-        with open(os.path.join(FIXTURE_PATH, 'spec.yaml'), 'r') as fh:
-            spec = yaml.load(fh)
+        spec = load_config(os.path.join(FIXTURE_PATH, 'spec.yaml'))
         self.spec = Spec(self.config, spec)
         self.spec._engine = self.engine
         self.gen = Generator(self.spec)

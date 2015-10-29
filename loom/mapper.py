@@ -39,11 +39,11 @@ class Mapper(object):
 
     def map_mapping(self, mapping):
         """ Bulk load data to the appropriate tables. """
-        entities = self.config.entities.writer()
+        types = self.config.types.writer()
         properties = self.config.properties.writer()
         for i, (s, p, o, t) in enumerate(self.records(mapping)):
             if p == TYPE_SCHEMA:
-                entities.write({
+                types.write({
                     'subject': s,
                     'schema': o,
                     'source': self.spec.source
@@ -56,9 +56,8 @@ class Mapper(object):
                     'type': t,
                     'source': self.spec.source
                 })
-
         properties.flush()
-        entities.flush()
+        types.flush()
 
     def map(self):
         for mapping in self.spec.mappings:
