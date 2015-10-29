@@ -36,7 +36,7 @@ class Indexer(object):
             except Exception as ex:
                 log.warning("Cannot update data mapping: %s", ex)
 
-    def convert_entity(self, schema, subject):
+    def convert_entity(self, subject, schema=None):
         entity = self.config.entities.get(subject, schema=schema)
         # extend the object to index form
         attr_count, link_count = count_attrs(entity)
@@ -45,7 +45,6 @@ class Indexer(object):
         entity['$text'] = extract_text(entity)
         entity['$latin'] = latinize(entity['$text'])
         # pprint(entity)
-
         return {
             '_id': entity.get('id'),
             '_type': self.config.get_alias(schema),
@@ -57,7 +56,7 @@ class Indexer(object):
         begin = time()
         subjects = self.config.entities.subjects(schema, source)
         for i, subject in enumerate(subjects):
-            yield self.convert_entity(schema, subject)
+            yield self.convert_entity(subject, schema=schema)
             if i > 0 and i % 1000 == 0:
                 elapsed = time() - begin
                 per_rec = (elapsed / float(i)) * 1000

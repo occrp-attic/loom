@@ -29,3 +29,11 @@ class MapperTestCase(TestCase):
         assert len(self.config.sources) == 1, len(self.config.sources)
         self.config.sources.delete(slug=source['slug'])
         assert len(self.config.sources) == 0, len(self.config.sources)
+
+    def test_create_object(self):
+        schema = self.spec.get('mappings').get('companies').get('schema')
+        self.config.add_schema(schema)
+        entity = {'id': 'foo', 'name': 'Foo entity'}
+        assert len(self.config.types) == 0, len(self.config.types)
+        self.config.entities.save(schema['id'], entity, 'foo_source')
+        assert len(self.config.types) == 1, len(self.config.types)

@@ -19,14 +19,12 @@ class Mapper(object):
     def records(self, mapping_name):
         mapper = SchemaMapper(self.spec.get_mapping(mapping_name),
                               self.config.resolver, scope=self.config.base_uri)
-        statements = StatementsVisitor(mapper.visitor.schema,
-                                       self.config.resolver,
-                                       scope=self.config.base_uri)
+        schema = mapper.visitor.schema.get('id')
         begin = time.time()
         stmts = 0
         for i, row in enumerate(self.generator.generate(mapping_name)):
             _, data = mapper.apply(row)
-            for stmt in statements.triplify(data):
+            for stmt in self.config.entities.triplify(schema, data):
                 stmts += 1
                 yield stmt
 
@@ -41,7 +39,7 @@ class Mapper(object):
         """ Bulk load data to the appropriate tables. """
         types = self.config.types.writer()
         properties = self.config.properties.writer()
-        for i, (s, p, o, t) in enumerate(self.records(mapping)):
+        for (s, p, o, t) in self.records(mapping):
             if p == TYPE_SCHEMA:
                 types.write({
                     'subject': s,

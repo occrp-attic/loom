@@ -2,7 +2,7 @@ import logging
 
 from sqlalchemy.sql.expression import select
 from sqlalchemy.sql import bindparam
-from jsonmapping import StatementsVisitor
+from jsonmapping import StatementsVisitor, TYPE_SCHEMA
 
 log = logging.getLogger(__name__)
 
@@ -35,9 +35,43 @@ class EntityManager(object):
         """
         if schema_uri not in self.visitors:
             _, schema = self.config.resolver.resolve(schema_uri)
-            visitor = StatementsVisitor(schema, self.config.resolver)
+            visitor = StatementsVisitor(schema, self.config.resolver,
+                                        scope=self.config.base_uri)
             self.visitors[schema_uri] = visitor
         return self.visitors[schema_uri]
+
+    def triplify(self, schema, data):
+        """ Generate statements from a given data object. """
+        visitor = self.get_statements_visitor(schema)
+        return visitor.triplify(data)
+
+    def _split_statements(self, statements, source):
+        properties, types = [], []
+        for (s, p, o, t) in statements:
+            if p == TYPE_SCHEMA:
+                types.append({
+                    'subject': s,
+                    'schema': o,
+                    'source': source
+                })
+            else:
+                properties.append({
+                    'subject': s,
+                    'predicate': p,
+                    'object': o,
+                    'type': t,
+                    'source': source
+                })
+        return properties, types
+
+    def save(self, schema, data, source):
+        """ Save the given object to the database. """
+        statements = self.triplify(schema, data)
+        properties, types = self._split_statements(statements, source)
+        self.config.types.insert_many(types)
+        self.config.properties.insert_many(properties)
+        if len(types):
+            return types[0]
 
     def get(self, subject, schema=None):
         """ Get an object representation of an entity defined by the given

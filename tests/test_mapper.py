@@ -66,4 +66,4 @@ class MapperTestCase(TestCase):
         data = self.config.entities.get(subject)
         assert '$schema' in data, data
         assert data['name'] == '3M Co', data
-        assert len(self.config.types) == 992, len(self.config.types)
+        assert len(self.config.types) > 900, len(self.config.types)
