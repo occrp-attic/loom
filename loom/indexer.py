@@ -70,3 +70,4 @@ class Indexer(object):
             bulk(client, self.generate_entities(schema, source),
                  stats_only=True, chunk_size=self.chunk,
                  request_timeout=60.0)
+        client.indices.flush_synced()
