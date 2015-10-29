@@ -87,8 +87,6 @@ class Config(EnvMapping):
     def resolver(self):
         if not hasattr(self, '_resolver'):
             self._resolver = RefResolver(self.base_uri, self.base_uri)
-            for alias, uri in self.schemas.items():
-                self._resolver.resolve(uri)
         return self._resolver
 
     def add_schema(self, schema):

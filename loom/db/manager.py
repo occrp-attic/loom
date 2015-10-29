@@ -22,40 +22,32 @@ class TableManager(object):
         self.indexes = indexes
         self.unique = unique
 
+        # access to create
+        bind = self.bind.connect()
+        if self.is_postgresql:
+            bind.connection.connection.set_isolation_level(0)
+
+        self.table = Table(self.name, self.meta)
+        for col in self.columns:
+            self.table.append_column(col)
         if not self.bind.has_table(self.name):
-            log.debug('Ensuring table: %r', self.table.name)
+            log.info("Creating table: %r in %r", self.name, bind)
+            self.table.create(bind)
+
+        self._create_indexes(bind)
 
     @property
     def is_postgresql(self):
         return 'postgres' in self.bind.dialect.name
 
-    @property
-    def table(self):
-        """ Generate an appropriate table representation to mirror the
-        fields known for this table. """
-        if not hasattr(self, '_table'):
-            bind = self.bind.connect()
-            if hasattr(bind.connection.connection, 'set_isolation_level'):
-                bind.connection.connection.set_isolation_level(0)
-            if self.bind.has_table(self.name):
-                self._table = Table(self.name, self.meta, autoload=True)
-            else:
-                self._table = Table(self.name, self.meta)
-                for col in self.columns:
-                    self._table.append_column(col)
-                log.info("Creating table: %r in %r", self.name, bind)
-                self._table.create(bind)
-            self._create_indexes(self._table, bind)
-        return self._table
-
-    def _create_indexes(self, table, bind):
-        existing = [i.name for i in table.indexes]
+    def _create_indexes(self, bind):
+        existing = [i.name for i in self.table.indexes]
         for columns in self.indexes:
             index = '_'.join([self.name] + list(columns) + ['idx'])
             if index in existing:
                 continue
-            log.debug("Adding concurrent index %r: %r", self.name, columns)
-            columns = [table.c[c] for c in columns]
+            log.debug("Adding index %r: %r", self.name, columns)
+            columns = [self.table.c[c] for c in columns]
             index = Index(index, *columns, postgresql_concurrently=True)
             index.create(bind=bind)
 
@@ -70,9 +62,9 @@ class TableManager(object):
 
     def upsert(self, record):
         """ Check if a given record exists, otherwise insert it. """
-        wc = [self.table.columns[u] == record.get(u) for u in self.unique]
+        wc = [self.table.c[u] == record.get(u) for u in self.unique]
         wc = and_(*wc)
-        q = select([func.count(self.table.columns.id)]).where(wc)
+        q = select([self.table.columns.id]).where(wc).count()
         if self.bind.execute(q).scalar() > 0:
             q = self.table.update().where(wc).values(record)
         else:

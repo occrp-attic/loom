@@ -26,13 +26,11 @@ class Indexer(object):
         client.indices.create(ignore=400, index=index)
         for schema in self.config.schemas.values():
             doc_type = self.config.get_alias(schema)
-            mapping = client.indices.get_mapping(index=index,
-                                                 doc_type=doc_type)
-            mapping = generate_mapping(mapping, index, doc_type, schema,
+            mapping = generate_mapping(index, doc_type, schema,
                                        self.config.resolver)
             try:
                 client.indices.put_mapping(index=index, doc_type=doc_type,
-                                           body={doc_type: mapping})
+                                           body=mapping)
             except Exception as ex:
                 log.warning("Cannot update data mapping: %s", ex)
 
@@ -63,7 +61,7 @@ class Indexer(object):
                 log.info("Indexing %r: %s records (%.2fms/r)",
                          schema, i, per_rec)
 
-    def index(self, schema, source):
+    def index(self, schema=None, source=None):
         client = self.config.elastic_client
         log.debug('Indexing to: %r (index: %r)', client,
                   self.config.elastic_index)
