@@ -5,7 +5,7 @@ from pprint import pprint  # noqa
 
 from elasticsearch.helpers import bulk
 
-from loom.analysis import extract_text, count_attrs, latinize
+from loom.analysis import extract_text, latinize
 from loom.elastic import generate_mapping
 
 log = logging.getLogger(__name__)
@@ -37,9 +37,6 @@ class Indexer(object):
     def convert_entity(self, subject, schema=None):
         entity = self.config.entities.get(subject, schema=schema)
         # extend the object to index form
-        attr_count, link_count = count_attrs(entity)
-        entity['$attrcount'] = attr_count
-        entity['$linkcount'] = link_count
         entity['$text'] = extract_text(entity)
         entity['$latin'] = latinize(entity['$text'])
         # pprint(entity)

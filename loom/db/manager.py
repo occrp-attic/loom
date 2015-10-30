@@ -33,8 +33,7 @@ class TableManager(object):
         if not self.bind.has_table(self.name):
             log.info("Creating table: %r in %r", self.name, bind)
             self.table.create(bind)
-
-        self._create_indexes(bind)
+            self._create_indexes(bind)
 
     @property
     def is_postgresql(self):

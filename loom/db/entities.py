@@ -20,13 +20,14 @@ class EntityManager(object):
         bottleneck. """
         if not hasattr(self, '_pq'):
             table = self.config.properties.table
-            q = select([table.c.predicate, table.c.object, table.c.source])
+            q = select([table.c.predicate, table.c.object, table.c.type,
+                        table.c.source])
             q = q.where(table.c.subject == bindparam('subject'))
             self._pq = q.compile(self.config.engine)
 
         rp = self.config.engine.execute(self._pq, subject=subject)
         rows = rp.fetchall()
-        rows = [(row.predicate, row.object, row.source) for row in rows]
+        rows = [(r.predicate, r.object, r.type, r.source) for r in rows]
         return set(rows)
 
     def get_statements_visitor(self, schema_uri):
@@ -73,7 +74,7 @@ class EntityManager(object):
         if len(types):
             return types[0]
 
-    def get(self, subject, schema=None):
+    def get(self, subject, schema=None, depth=1):
         """ Get an object representation of an entity defined by the given
         ``schema`` and ``subject`` ID. """
         if schema is None:
@@ -84,7 +85,7 @@ class EntityManager(object):
             rp = self.config.engine.execute(q)
             schema = rp.fetchone().schema
         visitor = self.get_statements_visitor(schema)
-        return visitor.objectify(self._load_properties, subject)
+        return visitor.objectify(self._load_properties, subject, depth=depth)
 
     def subjects(self, schema=None, source=None, chunk=10000):
         """ Iterate over all entity IDs which match the current set of

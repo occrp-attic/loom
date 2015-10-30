@@ -27,7 +27,7 @@ def get_types_manager(config):
                Column('subject', Unicode(1024)),
                Column('schema', Unicode(1024)),
                Column('source', Unicode(255)))
-    indexes = [('schema', 'source'), ('schema',), ('source',)]
+    indexes = [('schema', 'source'), ('schema',), ('source',), ('subject',)]
     unique = ('subject', 'source')
     return TableManager(config, 'entity', columns, indexes, unique)
 

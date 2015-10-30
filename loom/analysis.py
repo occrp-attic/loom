@@ -33,18 +33,3 @@ def extract_text(data, sep=' : '):
     if isinstance(data, Iterable):
         text = [extract_text(d, sep=sep) for d in data]
         return sep.join([t for t in text if t is not None])
-
-
-def count_attrs(data):
-    """ Count the number of overall attributes and nested objects which a
-    dictionary has. """
-    attr_count, link_count = 0, 0
-    for field, value in data.items():
-        if field in IGNORE_FIELDS:
-            continue
-        attr_count += 1
-        if isinstance(value, dict):
-            link_count += 1
-        elif isinstance(value, (list, set, tuple)):
-            link_count += len(value)
-    return attr_count, link_count
