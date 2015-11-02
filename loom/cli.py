@@ -24,8 +24,8 @@ def cli(ctx, debug, config_file):
     ctx.obj['DEBUG'] = debug
 
     config = load_config(config_file)
-    config.setup()
     ctx.obj['CONFIG'] = Config(config, path=config_file)
+    ctx.obj['CONFIG'].setup()
 
     fmt = '[%(levelname)-8s] %(name)-12s: %(message)s'
     level = logging.DEBUG if debug else logging.INFO
@@ -94,13 +94,25 @@ def flush(ctx, source, flush_all):
 @click.pass_context
 def dedupe(ctx):
     """ De-duplicate statements inside the statement DB. """
-    try:
-        config = ctx.obj['CONFIG']
-        config.types.dedupe()
-        config.properties.dedupe()
-    except LoomException as le:
-        raise click.ClickException(le.message)
-
+    config = ctx.obj['CONFIG']
+    if not config.is_postgresql:
+        msg = "De-dupe is only support with PostgreSQL"
+        raise click.ClickException(msg)
+    conn = config.engine.connect()
+    dedupe_q = """DELETE FROM entity WHERE id IN (
+        SELECT id FROM (
+            SELECT id, ROW_NUMBER() OVER (partition BY subject, source, schema
+            ORDER BY id) AS rnum
+        FROM entity) t
+        WHERE t.rnum > 1);"""
+    conn.execute(dedupe_q)
+    dedupe_q = """DELETE FROM property WHERE id IN (
+        SELECT id FROM (
+            SELECT id, ROW_NUMBER() OVER (partition BY subject, predicate, object, source
+            ORDER BY id) AS rnum
+        FROM property) t
+        WHERE t.rnum > 1);"""
+    conn.execute(dedupe_q)
 
 if __name__ == '__main__':
     cli(obj={})

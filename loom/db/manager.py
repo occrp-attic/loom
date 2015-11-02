@@ -18,10 +18,6 @@ class TableManager(object):
         self.bind = config.engine
         self.name = clazz.__tablename__
 
-    @property
-    def is_postgresql(self):
-        return 'postgres' in self.config.engine.dialect.name
-
     def writer(self):
         return Writer(self)
 
@@ -38,29 +34,6 @@ class TableManager(object):
         conn = self.bind.connect()
         tx = conn.begin()
         conn.execute(q)
-        tx.commit()
-
-    def dedupe(self):
-        # Requires window functions.
-        if not self.is_postgresql:
-            log.info("Not using PostgreSQL, cannot de-duplicate")
-            return
-        log.info("De-duplicating table: %r", self.name)
-        args = {
-            'name': self.name,
-            'unique': ', '.join(self.clazz.UNIQUE)
-        }
-        dedupe_q = """
-            DELETE FROM %(name)s WHERE id IN (
-                SELECT id FROM (
-                    SELECT id, ROW_NUMBER() OVER (partition BY %(unique)s
-                    ORDER BY id) AS rnum
-                FROM %(name)s) t
-                WHERE t.rnum > 1);
-        """ % args
-        conn = self.bind.connect()
-        tx = conn.begin()
-        conn.execute(dedupe_q)
         tx.commit()
 
     def __len__(self):

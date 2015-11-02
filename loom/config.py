@@ -35,7 +35,7 @@ class Config(EnvMapping):
 
     @property
     def is_postgresql(self):
-        return 'postgres' in self.bind.dialect.name
+        return 'postgres' in self.engine.dialect.name
 
     def setup(self):
         session.configure(bind=self.engine)

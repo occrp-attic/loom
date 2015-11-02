@@ -56,13 +56,13 @@ class Writer(object):
         temp.close()
 
     def flush(self):
-        if self.manager.is_postgresql:
+        if self.manager.config.is_postgresql:
             self.queue.put((int(self.rows), self.temp))
             self.queue.join()
 
     def write(self, record):
         self.rows += 1
-        if self.manager.is_postgresql:
+        if self.manager.config.is_postgresql:
             self.writer.writerow(record)
             if self.rows > 0 and self.rows % 500000 == 0:
                 self.queue.put((int(self.rows), self.temp))

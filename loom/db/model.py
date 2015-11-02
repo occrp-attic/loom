@@ -3,7 +3,6 @@ from sqlalchemy.types import Unicode, BigInteger, Integer, DateTime
 from sqlalchemy.dialects import postgresql, sqlite
 from sqlalchemy.orm.session import sessionmaker
 from sqlalchemy.orm.scoping import scoped_session
-from sqlalchemy.sql.expression import func
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
 
 Base = declarative_base()
@@ -17,8 +16,6 @@ session = scoped_session(_sessionmaker)
 class Property(Base):
     """ Main statement table. """
     __tablename__ = 'property'
-
-    UNIQUE = ('subject', 'predicate', 'object', 'source')
 
     id = Column(BigIntegerType, primary_key=True)
     subject = Column(Unicode(1024))
@@ -43,8 +40,6 @@ class Property(Base):
 class Entity(Base):
     """ Type declarations for type declarations. """
     __tablename__ = 'entity'
-
-    UNIQUE = ('subject', 'source')
 
     id = Column(BigIntegerType, primary_key=True)
     subject = Column(Unicode(1024))
