@@ -16,9 +16,9 @@ BASE_MAPPING = {
 }
 
 
-def generate_mapping(index, doc_type, schema, resolver):
+def generate_mapping(schema, resolver):
     """ Generate a mapping. """
     mapping = BASE_MAPPING
-    schema_mapping = generate_schema_mapping(resolver, schema)
+    schema_mapping = generate_schema_mapping(resolver, schema, depth=2)
     mapping['properties'].update(schema_mapping.get('properties'))
     return mapping

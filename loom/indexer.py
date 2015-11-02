@@ -22,16 +22,13 @@ class Indexer(object):
         client = self.config.elastic_client
         index = self.config.elastic_index
         log.info("Ensuring search index and document mappings...")
-        client.indices.create(ignore=400, index=index)
+        mappings = {}
         for schema in self.config.schemas.values():
             doc_type = self.config.get_alias(schema)
-            mapping = generate_mapping(index, doc_type, schema,
-                                       self.config.resolver)
-            try:
-                client.indices.put_mapping(index=index, doc_type=doc_type,
-                                           body=mapping)
-            except Exception as ex:
-                log.warning("Cannot update data mapping: %s", ex)
+            mapping = generate_mapping(schema, self.config.resolver)
+            mappings[doc_type] = mapping
+        client.indices.create(ignore=400, index=index,
+                              body={'mappings': mappings})
 
     def convert_entity(self, subject, schema=None):
         entity = self.config.entities.get(subject, schema=schema)
