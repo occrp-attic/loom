@@ -7,8 +7,8 @@ from sqlalchemy import create_engine
 from jsonschema import RefResolver
 from elasticsearch import Elasticsearch
 
-from loom.db import get_types_manager, get_properties_manager
-from loom.db import EntityManager, Base, session
+from loom.db import EntityManager, TableManager, Property, Entity
+from loom.db import session, Base
 from loom.util import ConfigException, EnvMapping
 
 log = logging.getLogger(__name__)
@@ -51,13 +51,13 @@ class Config(EnvMapping):
     @property
     def types(self):
         if not hasattr(self, '_types'):
-            self._types = get_types_manager(self)
+            self._types = TableManager(self, Entity)
         return self._types
 
     @property
     def properties(self):
         if not hasattr(self, '_properties'):
-            self._properties = get_properties_manager(self)
+            self._properties = TableManager(self, Property)
         return self._properties
 
     @property

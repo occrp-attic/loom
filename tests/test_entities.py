@@ -5,8 +5,7 @@ from util import create_fixtures, FIXTURE_PATH
 
 from loom.db import Source, session
 from loom.config import Config
-from loom.spec import Spec
-from loom.mapper import Mapper
+from loom.loader import Spec, Mapper
 from loom.util import load_config
 
 

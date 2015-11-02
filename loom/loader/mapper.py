@@ -2,8 +2,9 @@ import time
 import logging
 
 from jsonmapping import Mapper as SchemaMapper
-from jsonmapping import StatementsVisitor, TYPE_SCHEMA
-from loom.db.generator import Generator
+from jsonmapping import TYPE_SCHEMA
+
+from loom.loader.generator import Generator
 
 log = logging.getLogger(__name__)
 

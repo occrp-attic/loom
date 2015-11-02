@@ -15,25 +15,6 @@ BASE_MAPPING = {
     }
 }
 
-# SETTINGS = {
-#     "index": {
-#         "analysis": {
-#             "analyzer": {
-#                 "latin": {
-#                     "tokenizer": "icu_tokenizer",
-#                     "filter": ["latinize", "lowercase"]
-#                 }
-#             },
-#             "filter": {
-#                 "latinize": {
-#                     "type": "icu_transform",
-#                     "id": "Any-Latin; NFD; [:Nonspacing Mark:] Remove; NFC; Latin-ASCII"
-#                 }
-#             }
-#         }
-#     }
-# }
-
 
 def generate_mapping(index, doc_type, schema, resolver):
     """ Generate a mapping. """

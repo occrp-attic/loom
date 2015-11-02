@@ -5,8 +5,7 @@ from unittest import TestCase
 from util import create_fixtures, FIXTURE_PATH
 
 from loom.config import Config
-from loom.spec import Spec
-from loom.mapper import Mapper
+from loom.loader import Spec, Mapper
 from loom.util import SpecException, ConfigException, load_config
 
 

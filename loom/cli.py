@@ -5,8 +5,7 @@ import click
 from loom.db import Source
 from loom.util import LoomException, load_config
 from loom.config import Config
-from loom.spec import Spec
-from loom.mapper import Mapper
+from loom.loader import Mapper, Spec
 from loom.indexer import Indexer
 
 log = logging.getLogger(__name__)

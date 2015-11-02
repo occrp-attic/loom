@@ -5,9 +5,8 @@ from unittest import TestCase
 from util import create_fixtures, FIXTURE_PATH
 
 from loom.config import Config, ConfigException
-from loom.spec import Spec
+from loom.loader import Spec, Generator
 from loom.util import load_config
-from loom.db.generator import Generator
 
 
 class ConfigTestCase(TestCase):
