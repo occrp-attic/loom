@@ -8,7 +8,7 @@ from jsonschema import RefResolver
 from elasticsearch import Elasticsearch
 
 from loom.db import get_types_manager, get_properties_manager
-from loom.db import get_sources_manager, EntityManager
+from loom.db import EntityManager, Base, session
 from loom.util import ConfigException, EnvMapping
 
 log = logging.getLogger(__name__)
@@ -34,6 +34,15 @@ class Config(EnvMapping):
         return self._engine
 
     @property
+    def is_postgresql(self):
+        return 'postgres' in self.bind.dialect.name
+
+    def setup(self):
+        session.configure(bind=self.engine)
+        Base.metadata.bind = self.engine
+        Base.metadata.create_all()
+
+    @property
     def entities(self):
         if not hasattr(self, '_entities'):
             self._entities = EntityManager(self)
@@ -50,12 +59,6 @@ class Config(EnvMapping):
         if not hasattr(self, '_properties'):
             self._properties = get_properties_manager(self)
         return self._properties
-
-    @property
-    def sources(self):
-        if not hasattr(self, '_sources'):
-            self._sources = get_sources_manager(self)
-        return self._sources
 
     @property
     def base_uri(self):

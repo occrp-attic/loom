@@ -14,10 +14,9 @@ class MapperTestCase(TestCase):
 
     def setUp(self):
         self.engine = create_fixtures()
-        self.config = Config({
-
-        })
+        self.config = Config({})
         self.config._engine = self.engine
+        self.config.setup()
         spec = load_config(os.path.join(FIXTURE_PATH, 'spec.yaml'))
         self.spec = Spec(self.config, spec)
         self.spec._engine = self.engine

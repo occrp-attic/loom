@@ -16,8 +16,8 @@ class Writer(object):
     def __init__(self, manager):
         self.manager = manager
         self.engine = manager.config.engine
-        self.fields = [unicode(c.name) for c in self.manager.columns]
-        self.fields = [f for f in self.fields if f not in ['id', 'timestamp']]
+        self.fields = [unicode(c.name) for c in self.manager.table.columns]
+        self.fields = [f for f in self.fields if f not in ['id', 'created']]
         self.rows = 0
         self.create_file()
 

@@ -3,6 +3,7 @@ from unittest import TestCase
 
 from util import create_fixtures, FIXTURE_PATH
 
+from loom.db import Source, session
 from loom.config import Config
 from loom.spec import Spec
 from loom.mapper import Mapper
@@ -15,6 +16,7 @@ class MapperTestCase(TestCase):
         self.engine = create_fixtures()
         self.config = Config({})
         self.config._engine = self.engine
+        self.config.setup()
         spec = load_config(os.path.join(FIXTURE_PATH, 'spec.yaml'))
         self.spec = Spec(self.config, spec)
         self.spec._engine = self.engine
@@ -23,12 +25,14 @@ class MapperTestCase(TestCase):
 
     def test_create_source(self):
         source = {'slug': 'foo', 'title': 'Foo source', 'url': 'http://foo'}
-        self.config.sources.upsert(source)
-        assert len(self.config.sources) == 1, len(self.config.sources)
-        self.config.sources.upsert(source)
-        assert len(self.config.sources) == 1, len(self.config.sources)
-        self.config.sources.delete(slug=source['slug'])
-        assert len(self.config.sources) == 0, len(self.config.sources)
+        Source.ensure(source)
+        session.commit()
+        cnt = session.query(Source).count()
+        assert cnt == 1, cnt
+        Source.ensure(source)
+        session.commit()
+        cnt = session.query(Source).count()
+        assert cnt == 1, cnt
 
     def test_create_object(self):
         schema = self.spec.get('mappings').get('companies').get('schema')

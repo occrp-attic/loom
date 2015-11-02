@@ -17,7 +17,6 @@ class Indexer(object):
     def __init__(self, config):
         self.config = config
         self.chunk = int(config.get('chunk') or 1000)
-        self.configure()
 
     def configure(self):
         client = self.config.elastic_client

@@ -2,6 +2,7 @@ import logging
 
 import click
 
+from loom.db import Source
 from loom.util import LoomException, load_config
 from loom.config import Config
 from loom.spec import Spec
@@ -24,6 +25,7 @@ def cli(ctx, debug, config_file):
     ctx.obj['DEBUG'] = debug
 
     config = load_config(config_file)
+    config.setup()
     ctx.obj['CONFIG'] = Config(config, path=config_file)
 
     fmt = '[%(levelname)-8s] %(name)-12s: %(message)s'
@@ -45,7 +47,7 @@ def map(ctx, spec_file):
         spec = Spec(config, spec, path=spec_file)
 
         log.info("Registering source: %r", spec.source)
-        config.sources.upsert(spec.get('source', {}))
+        Source.ensure(spec.get('source'))
 
         mapper = Mapper(config, spec)
         mapper.map()
@@ -64,6 +66,7 @@ def index(ctx, schema, source):
     try:
         config = ctx.obj['CONFIG']
         indexer = Indexer(config)
+        indexer.configure()
         indexer.index(schema=schema, source=source)
     except LoomException as le:
         raise click.ClickException(le.message)
