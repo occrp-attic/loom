@@ -1,5 +1,5 @@
-from sqlalchemy.schema import Column
-from sqlalchemy.types import Unicode, Integer
+from sqlalchemy import Column, Unicode, Integer, DateTime
+from sqlalchemy import func
 
 from loom.db.util import Base, session
 
@@ -12,8 +12,8 @@ class Source(Base):
     slug = Column(Unicode(255))
     title = Column(Unicode())
     url = Column(Unicode())
-    # created = Column(DateTime, default=func.now, nullable=True)
-    # updated = Column(DateTime, onupdate=func.now, nullable=True)
+    created_at = Column(DateTime, default=func.now())
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 
     @classmethod
     def ensure(cls, data):
@@ -31,7 +31,9 @@ class Source(Base):
         return {
             'slug': self.slug,
             'title': self.title,
-            'url': self.url
+            'url': self.url,
+            'created_at': self.created_at,
+            'updated_at': self.updated_at
         }
 
     def __repr__(self):

@@ -1,5 +1,4 @@
-from sqlalchemy.schema import Column, Index
-from sqlalchemy.types import Unicode
+from sqlalchemy import Column, Index, Unicode, DateTime, func
 from sqlalchemy.ext.declarative import declared_attr
 
 from loom.db.util import Base, BigIntegerType
@@ -13,7 +12,7 @@ class Entity(Base):
     subject = Column(Unicode(1024))
     schema = Column(Unicode(255))
     source = Column(Unicode(255))
-    # created = Column(DateTime, default=func.now, nullable=True)
+    created_at = Column(DateTime, default=func.now(), nullable=True)
 
     @declared_attr
     def __table_args__(cls):

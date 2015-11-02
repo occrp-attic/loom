@@ -83,7 +83,10 @@ class EntityManager(object):
             q = q.where(table.c.subject == subject)
             # TODO: sorting
             rp = self.config.engine.execute(q)
-            schema = rp.fetchone().schema
+            row = rp.fetchone()
+            if row is None:
+                return None
+            schema = row.schema
         visitor = self.get_statements_visitor(schema)
         return visitor.objectify(self._load_properties, subject, depth=depth)
 
