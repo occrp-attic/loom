@@ -74,19 +74,25 @@ class EntityManager(object):
         if len(types):
             return types[0]
 
+    def get_schema(self, subject):
+        """ For a given entity subject, return the appropriate schema. If this
+        returns ``None``, the entity/subject does not exist. """
+        table = self.config.types.table
+        q = select([table.c.schema])
+        q = q.where(table.c.subject == subject)
+        # TODO: sorting
+        rp = self.config.engine.execute(q)
+        row = rp.fetchone()
+        if row is None:
+            return None
+        return row.schema
+
     def get(self, subject, schema=None, depth=1):
         """ Get an object representation of an entity defined by the given
         ``schema`` and ``subject`` ID. """
+        schema = schema or self.get_schema(subject)
         if schema is None:
-            table = self.config.types.table
-            q = select([table.c.schema])
-            q = q.where(table.c.subject == subject)
-            # TODO: sorting
-            rp = self.config.engine.execute(q)
-            row = rp.fetchone()
-            if row is None:
-                return None
-            schema = row.schema
+            return
         visitor = self.get_statements_visitor(schema)
         return visitor.objectify(self._load_properties, subject, depth=depth)
 

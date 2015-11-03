@@ -14,6 +14,10 @@ class CollectionSubject(Base):
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 
+    def __init__(self, collection, subject):
+        self.collection = collection
+        self.subject = subject
+
 
 class Collection(Base):
     """ A collection of entities. """
@@ -29,6 +33,7 @@ class Collection(Base):
         return {
             'id': self.id,
             'title': self.title,
+            'subjects': [s.subject for s in self.subjects],
             'created_at': self.created_at,
             'updated_at': self.updated_at
         }
