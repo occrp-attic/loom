@@ -1,19 +1,15 @@
-from sqlalchemy import Column, Unicode, Integer, DateTime
-from sqlalchemy import func
+from sqlalchemy import Column, Unicode
 
-from loom.db.util import Base, session
+from loom.db.util import Base, CommonColumnsMixin, session
 
 
-class Source(Base):
+class Source(Base, CommonColumnsMixin):
     """ Data source. """
     __tablename__ = 'source'
 
-    id = Column(Integer, primary_key=True)
     slug = Column(Unicode(255))
     title = Column(Unicode())
     url = Column(Unicode())
-    created_at = Column(DateTime, default=func.now())
-    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 
     @classmethod
     def ensure(cls, data):

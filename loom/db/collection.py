@@ -1,33 +1,27 @@
-from sqlalchemy import Column, Unicode, Integer, ForeignKey, DateTime, func
+from sqlalchemy import Column, Unicode, Integer, ForeignKey
 from sqlalchemy.orm import relationship
 
-from loom.db.util import Base
+from loom.db.util import Base, CommonColumnsMixin
 
 
-class CollectionSubject(Base):
+class CollectionSubject(Base, CommonColumnsMixin):
     """ A subject marked part of a collection. """
     __tablename__ = 'collection_subject'
 
-    id = Column(Integer, primary_key=True)
     collection_id = Column(Integer, ForeignKey('collection.id'), index=True)
     subject = Column(Unicode, index=True)
-    created_at = Column(DateTime, default=func.now())
-    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 
     def __init__(self, collection, subject):
         self.collection = collection
         self.subject = subject
 
 
-class Collection(Base):
+class Collection(Base, CommonColumnsMixin):
     """ A collection of entities. """
     __tablename__ = 'collection'
 
-    id = Column(Integer, primary_key=True)
     title = Column(Unicode())
     subjects = relationship("CollectionSubject", backref="collection")
-    created_at = Column(DateTime, default=func.now())
-    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 
     def to_dict(self):
         return {
