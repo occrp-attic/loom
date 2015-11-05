@@ -45,9 +45,6 @@ def map(ctx, spec_file):
         spec = load_config(spec_file)
         spec = Spec(config, spec, path=spec_file)
 
-        log.info("Registering source: %r", spec.source)
-        Source.ensure(spec.get('source'))
-
         mapper = Mapper(config, spec)
         mapper.map()
     except LoomException as le:

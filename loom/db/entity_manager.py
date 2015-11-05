@@ -21,14 +21,26 @@ class EntityManager(object):
         if not hasattr(self, '_pq'):
             table = self.config.properties.table
             q = select([table.c.predicate, table.c.object, table.c.type,
-                        table.c.source])
+                        table.c.source_id, table.c.collection_id,
+                        table.c.author])
             q = q.where(table.c.subject == bindparam('subject'))
             self._pq = q.compile(self.config.engine)
 
         rp = self.config.engine.execute(self._pq, subject=subject)
-        rows = rp.fetchall()
-        rows = [(r.predicate, r.object, r.type, r.source) for r in rows]
-        return set(rows)
+        unique = set()
+        for row in rp.fetchall():
+            items = tuple(row.items())
+            if items in unique:
+                continue
+            unique.add(items)
+            yield {
+                'predicate': row.predicate,
+                'object': row.object,
+                'type': row.type,
+                'source': row.source_id,
+                'collection': row.collection_id,
+                'author': row.author
+            }
 
     def get_statements_visitor(self, schema_uri):
         """ This is a transformer object from ``jsonmapping`` that is used to
@@ -46,14 +58,14 @@ class EntityManager(object):
         visitor = self.get_statements_visitor(schema)
         return visitor.triplify(data)
 
-    def _split_statements(self, statements, source):
+    def _split_statements(self, statements, source_id):
         properties, types = [], []
         for (s, p, o, t) in statements:
             if p == TYPE_SCHEMA:
                 types.append({
                     'subject': s,
                     'schema': o,
-                    'source': source
+                    'source_id': source_id
                 })
             else:
                 properties.append({
@@ -61,14 +73,14 @@ class EntityManager(object):
                     'predicate': p,
                     'object': o,
                     'type': t,
-                    'source': source
+                    'source_id': source_id
                 })
         return properties, types
 
-    def save(self, schema, data, source):
+    def save(self, schema, data, source_id):
         """ Save the given object to the database. """
         statements = self.triplify(schema, data)
-        properties, types = self._split_statements(statements, source)
+        properties, types = self._split_statements(statements, source_id)
         self.config.types.insert_many(types)
         self.config.properties.insert_many(properties)
         if len(types):
@@ -96,16 +108,16 @@ class EntityManager(object):
         visitor = self.get_statements_visitor(schema)
         return visitor.objectify(self._load_properties, subject, depth=depth)
 
-    def subjects(self, schema=None, source=None, chunk=10000):
+    def subjects(self, schema=None, source_id=None, chunk=10000):
         """ Iterate over all entity IDs which match the current set of
         constraints (i.e. a specific schema or source dataset). """
         table = self.config.types.table
         q = select([table.c.subject])
         if schema is not None:
             q = q.where(table.c.schema == schema)
-        if source is not None:
-            q = q.where(table.c.source == source)
-            log.info('Getting %s by source: %s', schema, source)
+        if source_id is not None:
+            q = q.where(table.c.source_id == source_id)
+            log.info('Getting %s by source: %s', schema, source_id)
         else:
             log.info('Getting %s from all sources', schema)
         q = q.order_by(table.c.subject)

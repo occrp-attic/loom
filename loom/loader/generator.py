@@ -89,7 +89,7 @@ class Generator(object):
             if left.table in tables and right.table in tables:
                 q = q.where(left == right)
 
-        log.info("Query: %s", q)
+        log.debug("Query: %s", q)
         # TODO: see if this scales (i.e. the cursor loads data progressively)
         # else introduce pagination and sorting.
         rp = self.spec.engine.execute(q)

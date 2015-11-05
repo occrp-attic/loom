@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Index, DateTime, Unicode, func
+from sqlalchemy import Column, Index, DateTime, Integer, Unicode, func
 
 from loom.db.util import Base, BigIntegerType
 
@@ -8,7 +8,7 @@ class Property(Base):
     __tablename__ = 'property'
     __table_args__ = (
         Index('ix_property_subject', 'subject'),
-        Index('ix_property_source', 'source')
+        Index('ix_property_source_id', 'source_id')
     )
 
     id = Column(BigIntegerType, primary_key=True)
@@ -16,7 +16,9 @@ class Property(Base):
     predicate = Column(Unicode(255))
     object = Column(Unicode())
     type = Column(Unicode(32))
-    source = Column(Unicode(255))
+    source_id = Column(Integer, nullable=True)
+    collection_id = Column(Integer, nullable=True)
+    author = Column(Unicode(512), nullable=True)
     created_at = Column(DateTime, default=func.now(), nullable=True)
 
     def __repr__(self):

@@ -45,7 +45,7 @@ class Mapper(object):
                 types.write({
                     'subject': s,
                     'schema': o,
-                    'source': self.spec.source
+                    'source_id': self.spec.source
                 })
             else:
                 properties.write({
@@ -53,7 +53,7 @@ class Mapper(object):
                     'predicate': p,
                     'object': o,
                     'type': t,
-                    'source': self.spec.source
+                    'source_id': self.spec.source
                 })
         properties.flush()
         types.flush()

@@ -2,6 +2,7 @@ import logging
 
 from sqlalchemy import create_engine
 
+from loom.db import Source
 from loom.util import ConfigException, EnvMapping
 
 log = logging.getLogger(__name__)
@@ -18,7 +19,11 @@ class Spec(EnvMapping):
 
     @property
     def source(self):
-        return unicode(self.get('source', {}).get('slug'))
+        if not hasattr(self, '_source_id'):
+            source = self.get('source')
+            log.info("Registering source: %r", source['slug'])
+            self._source_id = Source.ensure(source).id
+        return self._source_id
 
     @property
     def engine(self):

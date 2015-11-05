@@ -25,6 +25,7 @@ class Source(Base, CommonColumnsMixin):
 
     def to_dict(self):
         return {
+            'id': self.id,
             'slug': self.slug,
             'title': self.title,
             'url': self.url,

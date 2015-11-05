@@ -5,6 +5,7 @@ from pprint import pprint  # noqa
 
 from elasticsearch.helpers import bulk
 
+from loom.db import Source, session
 from loom.analysis import extract_text, latinize
 from loom.elastic import generate_mapping
 
@@ -34,7 +35,7 @@ class Indexer(object):
         entity = self.config.entities.get(subject, schema=schema)
         # extend the object to index form
         entity['$text'] = extract_text(entity)
-        entity['$latin'] = latinize(entity['$text'])
+        entity['$latin'] = [latinize(t) for t in entity['$text']]
         # pprint(entity)
         return {
             '_id': entity.get('id'),
@@ -43,9 +44,9 @@ class Indexer(object):
             '_source': entity
         }
 
-    def generate_entities(self, schema, source):
+    def generate_entities(self, schema, source_id):
         begin = time()
-        subjects = self.config.entities.subjects(schema, source)
+        subjects = self.config.entities.subjects(schema, source_id)
         for i, subject in enumerate(subjects):
             yield self.convert_entity(subject, schema=schema)
             if i > 0 and i % 1000 == 0:
@@ -55,6 +56,9 @@ class Indexer(object):
                          schema, i, per_rec)
 
     def index(self, schema=None, source=None):
+        if source is not None:
+            q = session.query(Source.id).filter_by(slug=source)
+            source = q.first()
         client = self.config.elastic_client
         log.debug('Indexing to: %r (index: %r)', client,
                   self.config.elastic_index)

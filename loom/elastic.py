@@ -6,7 +6,9 @@ BASE_MAPPING = {
     "_all": {"enabled": True},
     "properties": {
         "$schema": {"type": "string", "index": "not_analyzed"},
-        "$sources": {"type": "string", "index": "not_analyzed"},
+        "$sources": {"type": "integer", "index": "not_analyzed"},
+        "$collections": {"type": "integer", "index": "not_analyzed"},
+        "$authors": {"type": "string", "index": "not_analyzed"},
         "$text": {"type": "string", "index": "analyzed"},
         "$linkcount": {"type": "integer", "index": "not_analyzed"},
         "$attrcount": {"type": "integer", "index": "not_analyzed"},
