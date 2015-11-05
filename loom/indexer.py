@@ -58,7 +58,10 @@ class Indexer(object):
     def index(self, schema=None, source=None):
         if source is not None:
             q = session.query(Source.id).filter_by(slug=source)
-            source = q.first()
+            obj = q.first()
+            if obj is None:
+                raise ValueError("No such source: %s" % source)
+            source = obj[0]
         client = self.config.elastic_client
         log.debug('Indexing to: %r (index: %r)', client,
                   self.config.elastic_index)
