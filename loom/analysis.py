@@ -15,7 +15,7 @@ def latinize(text):
     return transliterate(text).lower()
 
 
-def extract_text(data, sep=' : '):
+def extract_text(data):
     """ Get all the instances of text from a given object, recursively. """
     if isinstance(data, Mapping):
         values = []
@@ -29,7 +29,9 @@ def extract_text(data, sep=' : '):
     elif isinstance(data, (int, float)):
         data = six.text_type(data)
     if isinstance(data, six.string_types):
-        return data
+        return [data]
     if isinstance(data, Iterable):
-        text = [extract_text(d, sep=sep) for d in data]
-        return sep.join([t for t in text if t is not None])
+        values = []
+        for d in data:
+            values.extend(extract_text(d))
+        return values
