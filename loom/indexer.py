@@ -7,7 +7,7 @@ from elasticsearch.helpers import bulk
 
 from loom.db import Source, session
 from loom.analysis import extract_text, latinize
-from loom.elastic import generate_mapping
+from loom.elastic import generate_mapping, BASE_SETTINGS
 
 log = logging.getLogger(__name__)
 
@@ -28,14 +28,15 @@ class Indexer(object):
             doc_type = self.config.get_alias(schema)
             mapping = generate_mapping(schema, self.config.resolver)
             mappings[doc_type] = mapping
-        client.indices.create(ignore=400, index=index,
-                              body={'mappings': mappings})
+        body = {'mappings': mappings, 'settings': BASE_SETTINGS}
+        client.indices.create(ignore=400, index=index, body=body)
 
     def convert_entity(self, subject, schema=None):
         entity = self.config.entities.get(subject, schema=schema)
         # extend the object to index form
         entity['$text'] = extract_text(entity)
         entity['$latin'] = [latinize(t) for t in entity['$text']]
+        entity['$suggest'] = entity.get('name')
         # pprint(entity)
         return {
             '_id': entity.get('id'),

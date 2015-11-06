@@ -13,7 +13,27 @@ BASE_MAPPING = {
         "$linkcount": {"type": "integer", "index": "not_analyzed"},
         "$attrcount": {"type": "integer", "index": "not_analyzed"},
         "$latin": {"type": "string", "index": "analyzed"},
+        "$suggest": {"type": "string", "analyzer": "autocomplete"},
         "$indexed_at": {"type": "date", "index": "not_analyzed"}
+    }
+}
+
+BASE_SETTINGS = {
+    "analysis": {
+        "analyzer": {
+            "autocomplete": {
+                "type": "custom",
+                "tokenizer": "standard",
+                "filter": ["standard", "lowercase", "autocomp"]
+            }
+        },
+        "filter": {
+            "autocomp": {
+                "type": "edge_ngram",
+                "min_gram": 1,
+                "max_gram": 20
+            }
+        }
     }
 }
 
