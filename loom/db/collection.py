@@ -21,7 +21,7 @@ class Collection(Base, CommonColumnsMixin):
     __tablename__ = 'collection'
 
     title = Column(Unicode())
-    subjects = relationship("CollectionSubject", backref="collection")
+    subjects = relationship(CollectionSubject, backref="collection")
 
     def to_dict(self):
         return {
@@ -33,4 +33,4 @@ class Collection(Base, CommonColumnsMixin):
         }
 
     def __repr__(self):
-        return '<Collection(%s)>' % self.title
+        return '<Collection(%r)>' % self.title

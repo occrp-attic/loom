@@ -22,5 +22,5 @@ class Property(Base):
     created_at = Column(DateTime, default=func.now(), nullable=True)
 
     def __repr__(self):
-        return '<Entity(%s,%s,%s)>' % (self.subject, self.predicate,
-                                       self.object)
+        return '<Property(%r,%r,%r)>' % (self.subject, self.predicate,
+                                         self.object)

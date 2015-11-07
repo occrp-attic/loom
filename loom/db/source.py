@@ -34,4 +34,4 @@ class Source(Base, CommonColumnsMixin):
         }
 
     def __repr__(self):
-        return '<Source(%s)>' % self.slug
+        return '<Source(%r)>' % self.slug

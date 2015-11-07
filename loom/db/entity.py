@@ -21,4 +21,4 @@ class Entity(Base):
     created_at = Column(DateTime, default=func.now(), nullable=True)
 
     def __repr__(self):
-        return '<Entity(%s,%s)>' % (self.subject, self.schema)
+        return '<Entity(%r,%r)>' % (self.subject, self.schema)
