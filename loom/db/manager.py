@@ -30,7 +30,8 @@ class TableManager(object):
     def delete(self, **kwargs):
         q = self.table.delete()
         for column, value in kwargs.items():
-            q = q.where(self.table.c[column] == value)
+            if value is not None:
+                q = q.where(self.table.c[column] == value)
         conn = self.bind.connect()
         tx = conn.begin()
         conn.execute(q)

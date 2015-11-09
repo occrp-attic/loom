@@ -2,8 +2,9 @@ import logging
 
 import click
 
-from loom.db import Source
+
 from loom.util import LoomException, load_config
+from loom.db import Source
 from loom.config import Config
 from loom.loader import Mapper, Spec
 from loom.indexer import Indexer
@@ -81,8 +82,14 @@ def flush(ctx, source, flush_all):
             msg = "Either specify a --source or pass --all"
             raise click.ClickException(msg)
         config = ctx.obj['CONFIG']
-        config.types.delete(source)
-        config.properties.delete(source)
+        source_obj = Source.by_slug(source)
+        source_id = None
+        if source_obj is not None:
+            source_id = source_obj.id
+        elif source_obj is None and source is not None:
+            raise click.ClickException("No such source: %r" % source)
+        config.types.delete(source_id=source_id)
+        config.properties.delete(source_id=source_id)
     except LoomException as le:
         raise click.ClickException(le.message)
 

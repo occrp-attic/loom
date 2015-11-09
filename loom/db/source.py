@@ -12,8 +12,14 @@ class Source(Base, CommonColumnsMixin):
     url = Column(Unicode())
 
     @classmethod
+    def by_slug(cls, slug):
+        if slug is None:
+            return
+        return session.query(cls).filter_by(slug=slug).first()
+
+    @classmethod
     def ensure(cls, data):
-        source = session.query(cls).filter_by(slug=data['slug']).first()
+        source = cls.by_slug(data['slug'])
         if source is None:
             source = Source()
             source.slug = data.get('slug')
