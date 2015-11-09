@@ -68,6 +68,10 @@ class Indexer(object):
                   self.config.elastic_index)
         schemas = self.config.schemas.values() if schema is None else [schema]
         for schema in schemas:
+            # FIXME This is somewhat hacky, remove edge types:
+            _, data = self.config.resolver.resolve(schema)
+            if data.get('graph') == 'edge':
+                continue
             bulk(client, self.generate_entities(schema, source),
                  stats_only=True, chunk_size=self.chunk,
                  request_timeout=60.0)
