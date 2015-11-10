@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime
+from itertools import groupby
 
 from sqlalchemy.sql.expression import select
 from sqlalchemy.sql import bindparam
@@ -110,8 +111,25 @@ class EntityManager(object):
                 })
         return properties, types
 
+    def _filter_properties(self, properties, right):
+        loader = self.make_loader(right)
+        for subject, props in groupby(properties, lambda p: p.get('subject')):
+            current = {}
+            for stmt in loader(subject):
+                current[stmt['predicate']] = stmt['object']
+            for prop in props:
+                obj = current.get(prop['predicate'])
+                if prop['predicate'] not in current or obj != prop['object']:
+                    yield prop
+
+    def _filter_types(self, types, right):
+        for t in types:
+            schema = self.get_schema(t['subject'], right=right)
+            if schema != t['schema']:
+                yield t
+
     def save(self, schema, data, source_id=None, collection_id=None,
-             author=None, created_at=None):
+             author=None, created_at=None, right=None):
         """ Save the given object to the database. """
         created_at = created_at or datetime.utcnow()
         statements = self.triplify(schema, data)
@@ -119,10 +137,15 @@ class EntityManager(object):
                                                    source_id=source_id,
                                                    collection_id=collection_id,
                                                    author=author)
-        self.config.types.insert_many(types)
-        self.config.properties.insert_many(properties)
+        properties = list(self._filter_properties(properties, right))
+        types = list(self._filter_types(types, right))
         if len(types):
-            return types[0]
+            self.config.types.insert_many(types)
+        if len(properties):
+            self.config.properties.insert_many(properties)
+        if len(types):
+            return types[0]['subject']
+        return data.get('id')
 
     def get_schema(self, subject, right=None):
         """ For a given entity subject, return the appropriate schema. If this

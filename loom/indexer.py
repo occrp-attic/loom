@@ -31,8 +31,8 @@ class Indexer(object):
         body = {'mappings': mappings, 'settings': BASE_SETTINGS}
         client.indices.create(ignore=400, index=index, body=body)
 
-    def convert_entity(self, subject, schema=None):
-        entity = self.config.entities.get(subject, schema=schema)
+    def convert_entity(self, subject, schema=None, depth=1):
+        entity = self.config.entities.get(subject, schema=schema, depth=depth)
         # extend the object to index form
         entity['$text'] = extract_text(entity)
         entity['$latin'] = [latinize(t) for t in entity['$text']]
@@ -76,3 +76,11 @@ class Indexer(object):
                  stats_only=True, chunk_size=self.chunk,
                  request_timeout=60.0)
         client.indices.flush_synced()
+
+    def index_one(self, subject, schema=None, depth=1):
+        entity = self.convert_entity(subject, schema=schema, depth=depth)
+        self.config.elastic_client.index(index=entity.get('_index'),
+                                         doc_type=entity.get('_type'),
+                                         body=entity.get('_source'),
+                                         id=entity.get('_id'))
+        return entity
