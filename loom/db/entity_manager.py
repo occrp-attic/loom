@@ -125,7 +125,8 @@ class EntityManager(object):
     def _filter_types(self, types, right):
         for t in types:
             schema = self.get_schema(t['subject'], right=right)
-            if schema != t['schema']:
+            if schema is None:
+                # TODO: potentially allow down-casting to more specific types.
                 yield t
 
     def save(self, schema, data, source_id=None, collection_id=None,

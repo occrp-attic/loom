@@ -56,6 +56,15 @@ class Indexer(object):
                 log.info("Indexing %r: %s records (%.2fms/r)",
                          schema, i, per_rec)
 
+    def is_schema_indexed(self, schema):
+        # FIXME This is somewhat hacky, remove edge types:
+        _, data = self.config.resolver.resolve(schema)
+        if data.get('graph') == 'edge':
+            return False
+        if data.get('inline'):
+            return False
+        return True
+
     def index(self, schema=None, source=None):
         if source is not None:
             q = session.query(Source.id).filter_by(slug=source)
@@ -68,9 +77,7 @@ class Indexer(object):
                   self.config.elastic_index)
         schemas = self.config.schemas.values() if schema is None else [schema]
         for schema in schemas:
-            # FIXME This is somewhat hacky, remove edge types:
-            _, data = self.config.resolver.resolve(schema)
-            if data.get('graph') == 'edge':
+            if not self.is_schema_indexed(schema):
                 continue
             bulk(client, self.generate_entities(schema, source),
                  stats_only=True, chunk_size=self.chunk,
@@ -78,6 +85,10 @@ class Indexer(object):
         client.indices.flush_synced()
 
     def index_one(self, subject, schema=None, depth=1):
+        if schema is None:
+            schema = self.config.entities.get_schema(subject)
+        if not self.is_schema_indexed(schema):
+            return
         entity = self.convert_entity(subject, schema=schema, depth=depth)
         self.config.elastic_client.index(index=entity.get('_index'),
                                          doc_type=entity.get('_type'),
