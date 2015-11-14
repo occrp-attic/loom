@@ -105,14 +105,16 @@ def dedupe(ctx):
     conn = config.engine.connect()
     dedupe_q = """DELETE FROM entity WHERE id IN (
         SELECT id FROM (
-            SELECT id, ROW_NUMBER() OVER (partition BY subject, source, schema
+            SELECT id, ROW_NUMBER() OVER (partition BY subject, schema,
+                source_id, collection_id, author
             ORDER BY id) AS rnum
         FROM entity) t
         WHERE t.rnum > 1);"""
     conn.execute(dedupe_q)
     dedupe_q = """DELETE FROM property WHERE id IN (
         SELECT id FROM (
-            SELECT id, ROW_NUMBER() OVER (partition BY subject, predicate, object, source
+            SELECT id, ROW_NUMBER() OVER (partition BY subject, predicate, object,
+                source_id, collection_id, author
             ORDER BY id) AS rnum
         FROM property) t
         WHERE t.rnum > 1);"""
