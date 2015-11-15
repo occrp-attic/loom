@@ -128,6 +128,8 @@ class EntityManager(object):
             if schema is None:
                 # TODO: potentially allow down-casting to more specific types.
                 yield t
+            if t in self.config.implied_schemas(schema):
+                yield t
 
     def save(self, schema, data, source_id=None, collection_id=None,
              author=None, created_at=None, right=None):

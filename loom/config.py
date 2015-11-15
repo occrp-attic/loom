@@ -5,6 +5,7 @@ import urlparse
 from normality import slugify
 from sqlalchemy import create_engine
 from jsonschema import RefResolver
+from jsonmapping import SchemaVisitor
 from elasticsearch import Elasticsearch
 
 from loom.db import EntityManager, TableManager, Property, Entity
@@ -91,6 +92,30 @@ class Config(EnvMapping):
         if not hasattr(self, '_resolver'):
             self._resolver = RefResolver(self.base_uri, self.base_uri)
         return self._resolver
+
+    def load_schemas(self):
+        for uri in self.schemas.values():
+            self.resolver.resolve(uri)
+
+    def _check_match(self, visitor, schema_uri):
+        if visitor.id == schema_uri:
+            return True
+        for parent in visitor.inherited:
+            if self._check_match(parent, schema_uri):
+                return True
+        return False
+
+    def implied_schemas(self, schema_uri):
+        """ Given a schema URI, return a list of implied (i.e. child) schema URIs,
+        with the original schema included. """
+        self.load_schemas()
+        schemas = [schema_uri]
+        for uri, data in self.resolver.store.items():
+            if isinstance(data, dict):
+                visitor = SchemaVisitor(data, self.resolver)
+                if self._check_match(visitor, schema_uri):
+                    schemas.append(data.get('id'))
+        return schemas
 
     def add_schema(self, schema):
         if 'id' in schema and schema['id'] not in self.resolver.store:
