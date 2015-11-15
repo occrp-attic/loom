@@ -46,7 +46,7 @@ class EntityManager(object):
                         table.c.source_id, table.c.collection_id,
                         table.c.author])
             q = q.where(table.c.subject == bindparam('subject'))
-            q = q.order_by(table.c.created_at.asc())
+            q = q.order_by(table.c.created_at.asc().nullsfirst())
             self._pq = q.compile(self.config.engine)
 
         def _loader(subject):
@@ -126,9 +126,8 @@ class EntityManager(object):
         for t in types:
             schema = self.get_schema(t['subject'], right=right)
             if schema is None:
-                # TODO: potentially allow down-casting to more specific types.
                 yield t
-            if t in self.config.implied_schemas(schema):
+            if t['schema'] in self.config.implied_schemas(schema):
                 yield t
 
     def save(self, schema, data, source_id=None, collection_id=None,
@@ -157,7 +156,7 @@ class EntityManager(object):
         q = select([table.c.schema, table.c.collection_id, table.c.source_id,
                     table.c.author])
         q = q.where(table.c.subject == subject)
-        q = q.order_by(table.c.created_at.desc())
+        q = q.order_by(table.c.created_at.desc().nullslast())
         rp = self.config.engine.execute(q)
         for row in rp.fetchall():
             if right is not None and not right.check(row):
