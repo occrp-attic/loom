@@ -46,7 +46,10 @@ class EntityManager(object):
                         table.c.source_id, table.c.collection_id,
                         table.c.author])
             q = q.where(table.c.subject == bindparam('subject'))
-            q = q.order_by(table.c.created_at.asc().nullsfirst())
+            order_by = table.c.created_at.asc()
+            if self.config.is_postgresql:
+                order_by = order_by.nullsfirst()
+            q = q.order_by(order_by)
             self._pq = q.compile(self.config.engine)
 
         def _loader(subject):
@@ -156,7 +159,10 @@ class EntityManager(object):
         q = select([table.c.schema, table.c.collection_id, table.c.source_id,
                     table.c.author])
         q = q.where(table.c.subject == subject)
-        q = q.order_by(table.c.created_at.desc().nullslast())
+        order_by = table.c.created_at.asc()
+        if self.config.is_postgresql:
+            order_by = order_by.nullslast()
+        q = q.order_by(order_by)
         rp = self.config.engine.execute(q)
         for row in rp.fetchall():
             if right is not None and not right.check(row):
