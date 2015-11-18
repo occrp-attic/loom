@@ -3,7 +3,7 @@ from time import time
 # from datetime import datetime
 from pprint import pprint  # noqa
 
-from elasticsearch.helpers import bulk
+from elasticsearch.helpers import bulk, scan
 
 from loom.db import Source, session
 from loom.analysis import extract_text, latinize
@@ -65,6 +65,35 @@ class Indexer(object):
             return False
         return True
 
+    def clear(self, schema=None, source_id=None):
+        filter_ = {'bool': {'must': []}}
+        if schema is not None:
+            filter_['bool']['must'].append({
+                'term': {'$schema': schema}
+            })
+        if source_id is not None:
+            filter_['bool']['must'].append({
+                'term': {'$sources': source_id}
+            })
+        q = {'filtered': {'query': {'match_all': {}}, 'filter': filter_}}
+        q = {'query': q, 'fields': []}
+
+        log.info('Deleting existing entries matching index criteria')
+
+        def gen_deletes():
+            for res in scan(self.config.elastic_client, query=q,
+                            index=self.config.elastic_index):
+                yield {
+                    '_op_type': 'delete',
+                    '_index': self.config.elastic_index,
+                    '_type': res.get('_type'),
+                    '_id': res.get('_id')
+                }
+
+        bulk(self.config.elastic_client, gen_deletes(),
+             stats_only=True, chunk_size=self.chunk,
+             request_timeout=60.0)
+
     def index(self, schema=None, source=None):
         if source is not None:
             q = session.query(Source.id).filter_by(slug=source)
@@ -75,6 +104,7 @@ class Indexer(object):
         client = self.config.elastic_client
         log.debug('Indexing to: %r (index: %r)', client,
                   self.config.elastic_index)
+        self.clear(schema=schema, source_id=source)
         schemas = self.config.schemas.values() if schema is None else [schema]
         for schema in schemas:
             if not self.is_schema_indexed(schema):
