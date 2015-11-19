@@ -130,6 +130,8 @@ class EntityManager(object):
             schema = self.get_schema(t['subject'], right=right)
             if schema is None:
                 yield t
+            if t['schema'] == schema:
+                continue
             if t['schema'] in self.config.implied_schemas(schema):
                 yield t
 
