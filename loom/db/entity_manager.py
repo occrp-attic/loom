@@ -121,8 +121,9 @@ class EntityManager(object):
             for stmt in loader(subject):
                 current[stmt['predicate']] = stmt['object']
             for prop in props:
-                obj = current.get(prop['predicate'])
-                if prop['predicate'] not in current or obj != prop['object']:
+                if prop['predicate'] not in current:
+                    yield prop
+                if prop['object'] != current.get(prop['predicate']):
                     yield prop
 
     def _filter_types(self, types, right):
