@@ -161,7 +161,7 @@ class EntityManager(object):
         q = select([table.c.schema, table.c.collection_id, table.c.source_id,
                     table.c.author])
         q = q.where(table.c.subject == subject)
-        order_by = table.c.created_at.asc()
+        order_by = table.c.created_at.desc()
         if self.config.is_postgresql:
             order_by = order_by.nullslast()
         q = q.order_by(order_by)
