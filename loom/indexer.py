@@ -57,6 +57,8 @@ class Indexer(object):
                          schema, i, per_rec)
 
     def is_schema_indexed(self, schema):
+        if schema is None:
+            return False
         # FIXME This is somewhat hacky, remove edge types:
         _, data = self.config.resolver.resolve(schema)
         if data.get('graph') == 'edge':

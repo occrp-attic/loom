@@ -155,6 +155,19 @@ class EntityManager(object):
             return types[0]['subject']
         return data.get('id')
 
+    def remove(self, subject, source_id=None, collection_id=None,
+               author=None):
+        """ Remove statements matching given criteria from the database. """
+        for table in [self.config.types, self.config.properties]:
+            where = {'subject': subject}
+            if source_id is not None:
+                where['source_id'] = source_id
+            if collection_id is not None:
+                where['collection_id'] = collection_id
+            if author is not None:
+                where['author'] = author
+            table.delete(**where)
+
     def get_schema(self, subject, right=None):
         """ For a given entity subject, return the appropriate schema. If this
         returns ``None``, the entity/subject does not exist. """
