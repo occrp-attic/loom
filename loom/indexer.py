@@ -47,8 +47,8 @@ class Indexer(object):
 
     def generate_entities(self, schema, source_id):
         begin = time()
-        subjects = self.config.entities.subjects(schema, source_id)
-        for i, subject in enumerate(subjects):
+        entities = self.config.entities.subjects(schema, source_id=source_id)
+        for i, (subject, schema) in enumerate(entities):
             yield self.convert_entity(subject, schema=schema)
             if i > 0 and i % 1000 == 0:
                 elapsed = time() - begin

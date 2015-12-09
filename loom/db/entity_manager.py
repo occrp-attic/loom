@@ -4,7 +4,11 @@ from itertools import groupby
 
 from sqlalchemy.sql.expression import select
 from sqlalchemy.sql import bindparam
+from sqlalchemy import or_
 from jsonmapping import StatementsVisitor, TYPE_SCHEMA
+
+from loom.db.collection import CollectionSubject
+
 
 log = logging.getLogger(__name__)
 
@@ -168,6 +172,20 @@ class EntityManager(object):
                 where['author'] = author
             table.delete(**where)
 
+    def _filter_type_right(self, q, right):
+        """ Extend a query to filter for types matching a particular right. """
+        if right is None:
+            return q
+        cols = self.config.types.table.columns
+        cond = []
+        if right.collections is not None:
+            cond.append(cols.collection_id.in_(right.collections))
+        if right.sources is not None:
+            cond.append(cols.source_id.in_(right.sources))
+        if right.author is not None:
+            cond.append(cols.author == right.author)
+        return q.where(or_(*cond))
+
     def get_schema(self, subject, right=None):
         """ For a given entity subject, return the appropriate schema. If this
         returns ``None``, the entity/subject does not exist. """
@@ -175,6 +193,7 @@ class EntityManager(object):
         q = select([table.c.schema, table.c.collection_id, table.c.source_id,
                     table.c.author])
         q = q.where(table.c.subject == subject)
+        q = self._filter_type_right(q, right)
         order_by = table.c.created_at.desc()
         if self.config.is_postgresql:
             order_by = order_by.nullslast()
@@ -195,21 +214,30 @@ class EntityManager(object):
         loader = self.make_loader(right)
         return visitor.objectify(loader, subject, depth=depth)
 
-    def subjects(self, schema=None, source_id=None, chunk=10000, right=None):
+    def subjects(self, schema=None, source_id=None, collection_id=None,
+                 chunk=10000, right=None):
         """ Iterate over all entity IDs which match the current set of
         constraints (i.e. a specific schema or source dataset). """
         table = self.config.types.table
         q = select([table.c.subject, table.c.collection_id, table.c.source_id,
-                    table.c.author])
+                    table.c.author, table.c.schema])
+        q = self._filter_type_right(q, right)
         if schema is not None:
             q = q.where(table.c.schema == schema)
         if source_id is not None:
             q = q.where(table.c.source_id == source_id)
-            log.info('Getting %s by source: %s', schema, source_id)
-        else:
-            log.info('Getting %s from all sources', schema)
+        if collection_id is not None:
+            cst = CollectionSubject.__table__
+            join = table.join(cst, cst.c.subject == table.c.subject)
+            q = q.select_from(join)
+            q = q.where(cst.c.collection_id == collection_id)
         q = q.order_by(table.c.subject)
+        order_by = table.c.created_at.desc()
+        if self.config.is_postgresql:
+            order_by = order_by.nullslast()
+        q = q.order_by(order_by)
         rp = self.config.engine.execute(q)
+
         prev = None
         while True:
             rows = rp.fetchmany(chunk)
@@ -219,5 +247,5 @@ class EntityManager(object):
                 if right is not None and not right.check(row):
                     continue
                 if row.subject != prev:
-                    yield row.subject
+                    yield (row.subject, row.schema)
                     prev = row.subject
